@@ -3,45 +3,62 @@
 <head>
 <meta charset="UTF-8">
 <title>Sistema OS - Entrada</title>
-
 <style>
-body { margin: 0; font-family: Arial; display: flex; background: #f1f5f9; }
+/* RESET E PADRÕES */
+body, html { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #f1f5f9; }
+a { text-decoration: none; color: inherit; }
+
+/* SIDEBAR / MENU */
 .sidebar {
   width: 240px; background: #0f172a; color: #fff;
-  padding: 20px; height: 100vh; position: fixed;
+  padding: 20px; height: 100vh; position: fixed; transition: transform 0.3s ease;
 }
+.sidebar h3 { margin-top: 0; font-size: 1.3em; }
 .sidebar a {
-  color: #fff; text-decoration: none;
-  display: block; padding: 10px;
+  display: block; padding: 12px 10px; border-radius: 6px; margin-bottom: 5px; 
+  color: #fff; font-weight: 500;
 }
-.sidebar a:hover { background: #334155; border-radius: 6px; }
+.sidebar a:hover { background: #334155; }
 
-.main { margin-left: 240px; padding: 30px; width: 100%; }
+/* BOTÃO PARA MOBILE */
+.menu-toggle {
+  display: none; position: fixed; top: 15px; left: 15px;
+  background: #2563eb; border: none; padding: 10px 15px;
+  color: #fff; border-radius: 6px; font-size: 16px; cursor: pointer;
+  z-index: 1001;
+}
 
+/* CONTEÚDO PRINCIPAL */
+.main {
+  margin-left: 240px; padding: 30px; transition: margin-left 0.3s ease;
+}
 .card {
-  background: #fff; padding: 25px;
-  border-radius: 14px; max-width: 700px;
+  background: #fff; padding: 25px; border-radius: 14px; max-width: 700px; margin: auto;
 }
-
 input, select, textarea {
-  width: 100%; padding: 10px;
-  margin-top: 10px; border-radius: 8px;
-  border: 1px solid #cbd5e1;
+  width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1;
 }
-
 button {
-  margin-top: 15px; padding: 12px;
-  border: none; border-radius: 8px;
-  background: #2563eb; color: #fff;
-  font-weight: bold; cursor: pointer;
+  margin-top: 15px; padding: 12px; border: none; border-radius: 8px;
+  background: #2563eb; color: #fff; font-weight: bold; cursor: pointer;
 }
 button:hover { background: #1e40af; }
+
+/* RESPONSIVO */
+@media(max-width: 768px) {
+  .sidebar { transform: translateX(-260px); height: 100%; position: fixed; z-index: 1000; }
+  .sidebar.show { transform: translateX(0); }
+  .main { margin-left: 0; padding: 20px; }
+  .menu-toggle { display: block; }
+}
 </style>
 </head>
-
 <body>
 
-<div class="sidebar">
+<!-- BOTÃO MENU MOBILE -->
+<button class="menu-toggle" onclick="toggleMenu()">☰ Menu</button>
+
+<div class="sidebar" id="sidebar">
   <h3>🛠 Sistema OS</h3>
   <a href="index.html">Entrada de Equipamento</a>
   <a href="clientes.html">Cadastro de Clientes</a>
@@ -82,9 +99,7 @@ button:hover { background: #1e40af; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore, collection, addDoc, getDocs, query, where
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
@@ -101,12 +116,10 @@ const db = getFirestore(app);
 const clientesRef = collection(db, "clientes");
 const osRef = collection(db, "os");
 
-// 🔹 Carregar clientes
 async function carregarClientes() {
   const snap = await getDocs(clientesRef);
   const select = document.getElementById("clienteSelect");
   select.innerHTML = `<option value="">-- Selecionar --</option>`;
-
   snap.forEach(d => {
     const c = d.data();
     const opt = document.createElement("option");
@@ -116,7 +129,6 @@ async function carregarClientes() {
   });
 }
 
-// 🔹 Gerar número da OS
 async function gerarOS() {
   const snap = await getDocs(osRef);
   if(snap.empty) return 1000;
@@ -124,21 +136,18 @@ async function gerarOS() {
   return Math.max(...nums) + 1;
 }
 
-// 🔹 Salvar OS
 async function salvarOS() {
   const clienteSelect = document.getElementById("clienteSelect").value;
   const novoCliente = document.getElementById("novoCliente").value.trim();
   const cliente = clienteSelect || novoCliente;
-
   if(!cliente) return alert("Informe o cliente");
 
   const telefone = document.getElementById("telefone").value;
   const endereco = document.getElementById("endereco").value;
   const status = document.getElementById("status").value;
   const descricao = document.getElementById("descricao").value;
-  const valor = Number(document.getElementById("valor").value) || ;
+  const valor = Number(document.getElementById("valor").value) || 0;
 
-  // 👉 cadastra cliente novo se não existir
   if(novoCliente) {
     const q = query(clientesRef, where("nome", "==", novoCliente));
     const existe = await getDocs(q);
@@ -151,15 +160,7 @@ async function salvarOS() {
   const financeiroStatus = status === "Concluído" ? "recebido" : "pendente";
 
   await addDoc(osRef, {
-    osnum,
-    cliente,
-    telefone,
-    endereco,
-    status,
-    descricao,
-    valor,
-    financeiroStatus,
-    data: new Date()
+    osnum, cliente, telefone, endereco, status, descricao, valor, financeiroStatus, data: new Date()
   });
 
   alert("Ordem de Serviço salva com sucesso!");
@@ -174,9 +175,11 @@ async function salvarOS() {
 
 window.salvarOS = salvarOS;
 carregarClientes();
-</script>
 
+// Função menu mobile
+function toggleMenu() {
+  document.getElementById('sidebar').classList.toggle('show');
+}
+</script>
 </body>
 </html>
-
-
