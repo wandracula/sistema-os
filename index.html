@@ -71,11 +71,7 @@ body {
   margin-bottom: 25px;
 }
 
-h3 {
-  margin-top: 0;
-  border-left: 5px solid var(--primary);
-  padding-left: 10px;
-}
+h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
 
 /* Form */
 input, select, textarea {
@@ -107,8 +103,52 @@ button {
   .main { margin-left: 200px; padding: 20px; }
 }
 </style>
-</head>
 
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+  authDomain: "sistema-os-1284b.firebaseapp.com",
+  projectId: "sistema-os-1284b",
+  storageBucket: "sistema-os-1284b.appspot.com",
+  messagingSenderId: "1032102605721",
+  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.salvarOS = async function() {
+  const os = {
+    osnum: document.getElementById("osnum").value,
+    cliente: document.getElementById("cliente").value,
+    telefone: document.getElementById("telefone").value,
+    endereco: document.getElementById("endereco").value,
+    status: document.getElementById("status").value,
+    descricao: document.getElementById("descricao").value,
+    valor: parseFloat(document.getElementById("valor").value)
+  };
+
+  try {
+    await addDoc(collection(db, "os"), os);
+    alert("OS salva com sucesso!");
+    document.getElementById("osnum").value = "";
+    document.getElementById("cliente").value = "";
+    document.getElementById("telefone").value = "";
+    document.getElementById("endereco").value = "";
+    document.getElementById("status").value = "Pendente";
+    document.getElementById("descricao").value = "";
+    document.getElementById("valor").value = "";
+  } catch (err) {
+    alert("Erro ao salvar OS: " + err.message);
+  }
+};
+</script>
+
+</head>
 <body>
 
 <div class="sidebar">
@@ -124,7 +164,6 @@ button {
 <div class="main">
   <div class="card">
     <h3>Cadastro de Ordem de Serviço</h3>
-
     <input id="osnum" placeholder="Número da OS">
     <input id="cliente" placeholder="Nome do Cliente">
     <input id="telefone" placeholder="Telefone (WhatsApp)">
@@ -137,64 +176,9 @@ button {
     </select>
     <textarea id="descricao" rows="4" placeholder="Descrição do serviço"></textarea>
     <input id="valor" type="number" placeholder="Valor do serviço R$">
-
     <button class="btn-primary" onclick="salvarOS()">Salvar OS</button>
   </div>
 </div>
-
-<!-- 🔥 Firebase -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-// Configuração do Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
-  authDomain: "sistema-os-1284b.firebaseapp.com",
-  projectId: "sistema-os-1284b",
-  storageBucket: "sistema-os-1284b.appspot.com",
-  messagingSenderId: "1032102605721",
-  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
-};
-
-// Inicializa Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Salvar OS no Firestore
-async function salvarOS() {
-  const os = {
-    osnum: document.getElementById("osnum").value,
-    cliente: document.getElementById("cliente").value,
-    telefone: document.getElementById("telefone").value,
-    endereco: document.getElementById("endereco").value,
-    status: document.getElementById("status").value,
-    descricao: document.getElementById("descricao").value,
-    valor: document.getElementById("valor").value
-  };
-
-  if(!os.osnum || !os.cliente) {
-    alert("Preencha pelo menos o número da OS e o nome do cliente!");
-    return;
-  }
-
-  try {
-    await addDoc(collection(db, "os"), os);
-    alert("OS salva com sucesso no Firebase!");
-
-    // Limpar formulário
-    document.getElementById("osnum").value = "";
-    document.getElementById("cliente").value = "";
-    document.getElementById("telefone").value = "";
-    document.getElementById("endereco").value = "";
-    document.getElementById("status").value = "Pendente";
-    document.getElementById("descricao").value = "";
-    document.getElementById("valor").value = "";
-  } catch (e) {
-    alert("Erro ao salvar OS: " + e.message);
-  }
-}
-</script>
 
 </body>
 </html>
