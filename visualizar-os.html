@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Visualizar Ordens de Serviço</title>
+<title>Ordens de Serviço</title>
 
 <style>
 body { margin: 0; font-family: Arial; display: flex; background: #f1f5f9; }
@@ -10,18 +10,22 @@ body { margin: 0; font-family: Arial; display: flex; background: #f1f5f9; }
   width: 240px; background: #0f172a; color: #fff;
   padding: 20px; height: 100vh; position: fixed;
 }
-.sidebar a { color: #fff; text-decoration: none; display: block; padding: 10px; }
-.sidebar a:hover { background: #334155; border-radius: 6px; }
+.sidebar a {
+  color: #fff; text-decoration: none;
+  display: block; padding: 12px;
+  border-radius: 6px;
+}
+.sidebar a:hover { background: #334155; }
 
 .main { margin-left: 240px; padding: 30px; width: 100%; }
 
 .card {
   background: #fff; padding: 20px;
-  border-radius: 12px; margin-bottom: 30px;
+  border-radius: 12px; margin-bottom: 20px;
 }
 
-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th, td { border: 1px solid #ccc; padding: 8px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid #ccc; padding: 6px; font-size: 14px; }
 
 input, textarea, select {
   width: 100%; padding: 6px;
@@ -31,10 +35,9 @@ button {
   background: #2563eb; color: #fff;
   border: none; padding: 6px 10px;
   border-radius: 6px; cursor: pointer;
+  margin-bottom: 4px;
 }
 button:hover { background: #1e40af; }
-
-.search { display: flex; gap: 10px; margin-bottom: 10px; }
 </style>
 </head>
 
@@ -43,42 +46,31 @@ button:hover { background: #1e40af; }
 <div class="sidebar">
   <h3>🛠 Sistema OS</h3>
   <a href="index.html">Entrada de Equipamento</a>
-  <a href="clientes.html">Cadastro de Clientes</a>
-  <a href="visualizar-os.html">Visualizar OS</a>
+  <a href="clientes.html">Clientes</a>
+  <a href="visualizar-os.html">OS</a>
   <a href="financeiro.html">Financeiro</a>
   <a href="produtos.html">Produtos</a>
-  <a href="backup.html">Backup / Restaurar</a>
 </div>
 
 <div class="main">
-
-  <!-- ORDENS ATIVAS -->
   <div class="card">
     <h2>Ordens em Aberto</h2>
-
-    <div class="search">
-      <input id="busca" placeholder="Buscar por OS ou Cliente">
-      <button onclick="filtrar()">Pesquisar</button>
-      <button onclick="carregarOS()">Limpar</button>
-    </div>
-
     <table>
       <thead>
         <tr>
           <th>OS</th>
           <th>Cliente</th>
           <th>Descrição</th>
-          <th>Valor</th>
           <th>Status</th>
-          <th>Observação</th>
-          <th>Ação</th>
+          <th>Valor</th>
+          <th>Obs.</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="listaAbertas"></tbody>
     </table>
   </div>
 
-  <!-- ORDENS CONCLUÍDAS -->
   <div class="card">
     <h2>Ordens Concluídas</h2>
     <table>
@@ -87,18 +79,21 @@ button:hover { background: #1e40af; }
           <th>OS</th>
           <th>Cliente</th>
           <th>Valor</th>
-          <th>Observação</th>
+          <th>PDF</th>
         </tr>
       </thead>
       <tbody id="listaConcluidas"></tbody>
     </table>
   </div>
-
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getFirestore, collection, getDocs, doc, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
@@ -111,96 +106,121 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const osCollection = collection(db, "os");
+const osRef = collection(db, "os");
 
-let todasOS = [];
-
-// 🔹 Carregar OS
-async function carregarOS() {
-  todasOS = [];
+async function carregar() {
   const abertas = document.getElementById("listaAbertas");
   const concluidas = document.getElementById("listaConcluidas");
   abertas.innerHTML = "";
   concluidas.innerHTML = "";
 
-  const snap = await getDocs(osCollection);
-  snap.forEach(d => todasOS.push({ id: d.id, ...d.data() }));
+  const snap = await getDocs(osRef);
+  snap.forEach(d => {
+    const os = d.data();
+    const id = d.id;
+    const valor = os.valor || 150;
 
-  render(todasOS);
-}
-
-// 🔹 Renderizar
-function render(lista) {
-  const abertas = document.getElementById("listaAbertas");
-  const concluidas = document.getElementById("listaConcluidas");
-  abertas.innerHTML = "";
-  concluidas.innerHTML = "";
-
-  lista.forEach(os => {
     if(os.status === "Concluído") {
       concluidas.innerHTML += `
         <tr>
           <td>${os.osnum}</td>
           <td>${os.cliente}</td>
-          <td>R$ ${(os.valor || 150).toFixed(2)}</td>
-          <td>${os.observacao || ""}</td>
+          <td>R$ ${valor.toFixed(2)}</td>
+          <td>
+            <button onclick='pdfOS(${JSON.stringify(os)})'>OS</button>
+            <button onclick='recibo(${JSON.stringify(os)})'>Recibo</button>
+          </td>
         </tr>
       `;
     } else {
       abertas.innerHTML += `
         <tr>
           <td>${os.osnum}</td>
-          <td><input id="c-${os.id}" value="${os.cliente}"></td>
-          <td><textarea id="d-${os.id}">${os.descricao || ""}</textarea></td>
-          <td><input type="number" id="v-${os.id}" value="${os.valor || 150}"></td>
+          <td>${os.cliente}</td>
+          <td><textarea id="d-${id}">${os.descricao||""}</textarea></td>
           <td>
-            <select id="s-${os.id}">
+            <select id="s-${id}">
               <option ${os.status=="Pendente"?"selected":""}>Pendente</option>
               <option ${os.status=="Em bancada"?"selected":""}>Em bancada</option>
               <option ${os.status=="Orçamento pronto"?"selected":""}>Orçamento pronto</option>
               <option ${os.status=="Concluído"?"selected":""}>Concluído</option>
             </select>
           </td>
-          <td><textarea id="o-${os.id}">${os.observacao || ""}</textarea></td>
-          <td><button onclick="salvar('${os.id}')">Salvar</button></td>
+          <td><input type="number" id="v-${id}" value="${valor}"></td>
+          <td><textarea id="o-${id}">${os.observacao||""}</textarea></td>
+          <td>
+            <button onclick="salvar('${id}')">Salvar</button>
+            <button onclick='pdfOS(${JSON.stringify(os)})'>PDF OS</button>
+          </td>
         </tr>
       `;
     }
   });
 }
 
-// 🔹 Salvar edição
 async function salvar(id) {
   const status = document.getElementById(`s-${id}`).value;
-  const financeiroStatus = status === "Concluído" ? "recebido" : "pendente";
-
   await updateDoc(doc(db, "os", id), {
-    cliente: document.getElementById(`c-${id}`).value,
     descricao: document.getElementById(`d-${id}`).value,
+    observacao: document.getElementById(`o-${id}`).value,
     valor: Number(document.getElementById(`v-${id}`).value),
     status,
-    observacao: document.getElementById(`o-${id}`).value,
-    financeiroStatus
+    financeiroStatus: status === "Concluído" ? "recebido" : "pendente"
   });
-
-  carregarOS();
+  carregar();
 }
 
-// 🔹 Pesquisa
-function filtrar() {
-  const termo = document.getElementById("busca").value.toLowerCase();
-  render(todasOS.filter(os =>
-    os.cliente.toLowerCase().includes(termo) ||
-    String(os.osnum).includes(termo)
-  ));
+/* ===== PDF ORDEM ===== */
+function pdfOS(os) {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+
+  pdf.setFontSize(16);
+  pdf.text("ORDEM DE SERVIÇO", 70, 15);
+
+  pdf.setFontSize(12);
+  pdf.text(`OS: ${os.osnum}`, 14, 30);
+  pdf.text(`Cliente: ${os.cliente}`, 14, 38);
+  pdf.text(`Telefone: ${os.telefone||""}`, 14, 46);
+  pdf.text(`Status: ${os.status}`, 14, 54);
+  pdf.text(`Valor: R$ ${(os.valor||150).toFixed(2)}`, 14, 62);
+
+  pdf.text("Descrição:", 14, 75);
+  pdf.text(os.descricao||"", 14, 83);
+
+  pdf.text("Observações:", 14, 115);
+  pdf.text(os.observacao||"", 14, 123);
+
+  pdf.text("Assinatura do Cliente: ___________________________", 14, 160);
+
+  pdf.save(`OS-${os.osnum}.pdf`);
+}
+
+/* ===== RECIBO ===== */
+function recibo(os) {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+
+  pdf.setFontSize(16);
+  pdf.text("RECIBO", 90, 20);
+
+  pdf.setFontSize(12);
+  pdf.text(`Recebi de ${os.cliente}`, 20, 40);
+  pdf.text(`A quantia de R$ ${(os.valor||150).toFixed(2)}`, 20, 50);
+  pdf.text("Referente a serviços prestados.", 20, 60);
+
+  pdf.text(`Data: ${new Date().toLocaleDateString()}`, 20, 80);
+  pdf.text("Assinatura: ___________________________", 20, 100);
+
+  pdf.save(`Recibo-OS-${os.osnum}.pdf`);
 }
 
 window.salvar = salvar;
-window.filtrar = filtrar;
+window.pdfOS = pdfOS;
+window.recibo = recibo;
 
-carregarOS();
+carregar();
 </script>
 
 </body>
 </html>
-
