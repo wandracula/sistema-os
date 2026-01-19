@@ -13,101 +13,27 @@
   --button-bg: #2563eb;
   --button-hover: #1e40af;
 }
-
-body {
-  margin: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: var(--bg-color);
-  color: var(--text-color);
-}
-
-.sidebar {
-  width: 240px;
-  height: 100vh;
-  background: #0f172a;
-  color: #f1f5f9;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  position: fixed;
-}
-
-.sidebar h2 {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.sidebar a {
-  padding: 12px;
-  margin-bottom: 10px;
-  color: #f1f5f9;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-}
-
+body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: var(--bg-color); color: var(--text-color);}
+.sidebar { width: 240px; height: 100vh; background: #0f172a; color: #f1f5f9; display: flex; flex-direction: column; padding: 20px; position: fixed;}
+.sidebar h2 { text-align: center; margin-bottom: 30px;}
+.sidebar a { padding: 12px; margin-bottom: 10px; color: #f1f5f9; text-decoration: none; border-radius: 8px; font-weight: 600;}
 .sidebar a:hover { background: #334155; }
-
-.main {
-  margin-left: 240px;
-  padding: 30px;
-}
-
-.card {
-  background: var(--card-bg);
-  padding: 25px;
-  border-radius: 14px;
-  box-shadow: 0 10px 20px rgba(0,0,0,.1);
-  margin-bottom: 25px;
-}
-
-h3 {
-  margin-top: 0;
-  border-left: 5px solid var(--primary);
-  padding-left: 10px;
-}
-
-input, textarea, select, button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-}
-
-button {
-  background: var(--button-bg);
-  color: #fff;
-  font-weight: bold;
-  cursor: pointer;
-}
-
+.main { margin-left: 240px; padding: 30px; }
+.card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 10px 20px rgba(0,0,0,.1); }
+h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
+input, textarea, select, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
+button { background: var(--button-bg); color: #fff; font-weight: bold; cursor: pointer; }
 button:hover { background: var(--button-hover); }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-
-th, td {
-  border: 1px solid #cbd5e1;
-  padding: 10px;
-  text-align: left;
-}
-
-img.produto-img {
-  width: 80px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 6px;
-}
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #cbd5e1; padding: 10px; }
+img.produto-img { width: 100px; height: 80px; object-fit: cover; border-radius: 6px; }
 </style>
 </head>
+
 <body>
 
 <div class="sidebar">
-  <h2>🛠 Sistema OS</h2>
+  <h3>🛠 Sistema OS</h3>
   <a href="index.html">Entrada de Equipamento</a>
   <a href="clientes.html">Cadastro de Clientes</a>
   <a href="visualizar-os.html">Visualizar OS</a>
@@ -128,14 +54,8 @@ img.produto-img {
       <option value="servico">Serviço</option>
       <option value="produto">Produto</option>
     </select>
-    <label>
-      <input type="checkbox" id="ativo" checked> Ativo na loja
-    </label>
-    <button id="btnSalvar" onclick="salvarProduto()">Salvar Produto</button>
-  </div>
+    <button onclick="adicionarProduto()">Adicionar Produto</button>
 
-  <div class="card">
-    <h3>Produtos Cadastrados</h3>
     <table>
       <thead>
         <tr>
@@ -144,8 +64,6 @@ img.produto-img {
           <th>Descrição</th>
           <th>Valor</th>
           <th>Categoria</th>
-          <th>Ativo</th>
-          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="lista"></tbody>
@@ -155,113 +73,83 @@ img.produto-img {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+// 🔥 Config Firebase corrigida
+const firebaseConfig = { 
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4", 
   authDomain: "sistema-os-1284b.firebaseapp.com",
   projectId: "sistema-os-1284b",
-  storageBucket: "sistema-os-1284b.appspot.com",
-  messagingSenderId: "1032102605721",
+  storageBucket: "sistema-os-1284b.appspot.com", 
+  messagingSenderId: "1032102605721", 
   appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let editId = null;
+// ➕ Adicionar produto
+window.adicionarProduto = async function () {
+  const nomeEl = document.getElementById("nome");
+  const descricaoEl = document.getElementById("descricao");
+  const valorEl = document.getElementById("valor");
+  const fotoEl = document.getElementById("foto");
+  const categoriaEl = document.getElementById("categoria");
 
-// Salvar ou atualizar produto
-async function salvarProduto() {
-  const produto = {
-    nome: document.getElementById("nome").value,
-    descricao: document.getElementById("descricao").value,
-    valor: Number(document.getElementById("valor").value),
-    foto: document.getElementById("foto").value,
-    categoria: document.getElementById("categoria").value,
-    ativo: document.getElementById("ativo").checked
-  };
-
-  if(!produto.nome || !produto.valor) {
+  if (!nomeEl.value || !valorEl.value) {
     alert("Preencha nome e valor!");
     return;
   }
 
+  const produto = {
+    nome: nomeEl.value,
+    descricao: descricaoEl.value,
+    valor: Number(valorEl.value),
+    foto: fotoEl.value,
+    categoria: categoriaEl.value,
+    ativo: true
+  };
+
   try {
-    if(editId) {
-      await updateDoc(doc(db, "produtos", editId), produto);
-      editId = null;
-    } else {
-      await addDoc(collection(db, "produtos"), produto);
-    }
-    limparFormulario();
-    carregarProdutos();
+    await addDoc(collection(db, "produtos"), produto);
     alert("Produto salvo com sucesso!");
+    
+    // limpar campos
+    nomeEl.value = "";
+    descricaoEl.value = "";
+    valorEl.value = "";
+    fotoEl.value = "";
+    categoriaEl.value = "servico";
+
+    carregarProdutos();
   } catch(e) {
-    console.error("Erro ao salvar produto:", e);
+    alert("Erro ao salvar produto: " + e.message);
   }
-}
+};
 
-// Limpar formulário
-function limparFormulario() {
-  document.getElementById("nome").value = "";
-  document.getElementById("descricao").value = "";
-  document.getElementById("valor").value = "";
-  document.getElementById("foto").value = "";
-  document.getElementById("categoria").value = "servico";
-  document.getElementById("ativo").checked = true;
-}
-
-// Carregar produtos
+// 📥 Carregar produtos
 async function carregarProdutos() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
+
   const snapshot = await getDocs(collection(db, "produtos"));
-  snapshot.forEach(docSnap => {
-    const p = docSnap.data();
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><img src="${p.foto || 'https://via.placeholder.com/80'}" class="produto-img"></td>
-      <td>${p.nome}</td>
-      <td>${p.descricao || ''}</td>
-      <td>R$ ${Number(p.valor).toFixed(2)}</td>
-      <td>${p.categoria}</td>
-      <td>${p.ativo ? 'Sim' : 'Não'}</td>
-      <td>
-        <button onclick="editarProduto('${docSnap.id}')">Editar</button>
-        <button onclick="deletarProduto('${docSnap.id}')">Excluir</button>
-      </td>
+  snapshot.forEach(doc => {
+    const p = doc.data();
+    lista.innerHTML += `
+      <tr>
+        <td><img src="${p.foto || 'https://via.placeholder.com/100'}" class="produto-img"></td>
+        <td>${p.nome}</td>
+        <td>${p.descricao || ''}</td>
+        <td>R$ ${p.valor.toFixed(2)}</td>
+        <td>${p.categoria}</td>
+      </tr>
     `;
-    lista.appendChild(tr);
   });
 }
 
-// Editar produto
-window.editarProduto = async function(id) {
-  const snapshot = await getDocs(collection(db, "produtos"));
-  const docSnap = snapshot.docs.find(d => d.id === id);
-  const p = docSnap.data();
-
-  document.getElementById("nome").value = p.nome;
-  document.getElementById("descricao").value = p.descricao;
-  document.getElementById("valor").value = p.valor;
-  document.getElementById("foto").value = p.foto;
-  document.getElementById("categoria").value = p.categoria;
-  document.getElementById("ativo").checked = p.ativo;
-
-  editId = id;
-}
-
-// Deletar produto
-window.deletarProduto = async function(id) {
-  if(confirm("Deseja realmente excluir este produto?")) {
-    await deleteDoc(doc(db, "produtos", id));
-    carregarProdutos();
-  }
-}
-
-// Inicial
+// Inicializa a lista
 carregarProdutos();
 </script>
+
 </body>
 </html>
