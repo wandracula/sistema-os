@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Cadastro de Clientes</title>
+<title>Clientes e Serviços</title>
 <style>
 :root {
   --bg-color: #0f172a;
@@ -12,7 +12,9 @@
   --text-color: #f1f5f9;
   --hover: #334155;
 }
+
 * { box-sizing: border-box; }
+
 body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; display: flex; background: #f1f5f9; }
 
 .sidebar {
@@ -25,23 +27,25 @@ body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; display: flex; bac
   padding: 20px;
   position: fixed;
 }
+
 .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
 .sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: var(--text-color); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
 .sidebar a:hover { background: var(--hover); }
 
 .main { margin-left: 240px; padding: 30px; flex: 1; }
+
 .card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
 h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
-
-input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
-
-button { margin-top: 15px; padding: 12px 18px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #fff; background: var(--primary); transition: 0.3s; }
-button:hover { background: #1e40af; }
 
 .lista { margin-top: 20px; }
 .lista .cliente { background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; }
 .lista .cliente:hover { background: #e2e8f0; }
+
 #detalheCliente { margin-top: 10px; padding: 12px; background: #f1f5f9; border-radius: 8px; display: none; }
+input, select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 6px; border: 1px solid #cbd5e1; }
+button { margin-top: 10px; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; background: var(--primary); }
+button:hover { background: #1e40af; }
+
 </style>
 </head>
 <body>
@@ -49,7 +53,7 @@ button:hover { background: #1e40af; }
 <div class="sidebar">
   <h2>🛠 Sistema OS</h2>
   <a href="index.html">Entrada de Equipamento</a>
-  <a href="clientes.html">Cadastro de Clientes</a>
+  <a href="clientes.html">Clientes / Serviços</a>
   <a href="visualizar-os.html">Visualizar OS</a>
   <a href="financeiro.html">Financeiro</a>
   <a href="produtos.html">Produtos</a>
@@ -58,77 +62,82 @@ button:hover { background: #1e40af; }
 
 <div class="main">
   <div class="card">
-    <h3>Cadastro de Cliente</h3>
-    <input id="nome" placeholder="Nome do Cliente">
-    <input id="telefone" placeholder="Telefone">
-    <button onclick="salvarCliente()">Salvar Cliente</button>
-  </div>
-
-  <div class="card">
-    <h3>Clientes Cadastrados</h3>
+    <h3>Clientes e Serviços</h3>
     <div class="lista" id="listaClientes"></div>
     <div id="detalheCliente"></div>
   </div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script>
+let listaOS = JSON.parse(localStorage.getItem("os")) || [];
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
-  authDomain: "sistema-os-1284b.firebaseapp.com",
-  projectId: "sistema-os-1284b",
-  storageBucket: "sistema-os-1284b.appspot.com",
-  messagingSenderId: "1032102605721",
-  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-async function salvarCliente() {
-  const nome = document.getElementById("nome").value;
-  const telefone = document.getElementById("telefone").value;
-  if (!nome || !telefone) { alert("Preencha todos os campos"); return; }
-
-  await addDoc(collection(db,"clientes"), { nome, telefone });
-  document.getElementById("nome").value = "";
-  document.getElementById("telefone").value = "";
-  carregarClientes();
+// Agrupa clientes únicos
+function clientesUnicos() {
+  let clientes = {};
+  listaOS.forEach(os => {
+    if(os.cliente) {
+      clientes[os.cliente] = os.telefone || "";
+    }
+  });
+  return clientes;
 }
 
-// Carregar clientes do Firebase
-let clientesLista = [];
-async function carregarClientes() {
-  const snapshot = await getDocs(collection(db,"clientes"));
-  clientesLista = [];
-  snapshot.forEach(doc => { clientesLista.push(doc.data()); });
-  mostrarClientes();
-}
-
-// Mostrar lista
 function mostrarClientes() {
   const div = document.getElementById("listaClientes");
   div.innerHTML = "";
-  clientesLista.forEach((c,i)=>{
+  const clientes = clientesUnicos();
+  Object.keys(clientes).forEach(nome => {
     const clienteDiv = document.createElement("div");
     clienteDiv.className = "cliente";
-    clienteDiv.textContent = `${c.nome} - ${c.telefone}`;
-    clienteDiv.onclick = () => mostrarDetalhe(c);
+    clienteDiv.textContent = `${nome} - ${clientes[nome]}`;
+    clienteDiv.onclick = () => mostrarDetalhe(nome);
     div.appendChild(clienteDiv);
   });
 }
 
-// Mostrar detalhes
-function mostrarDetalhe(cliente) {
+function mostrarDetalhe(nome) {
   const div = document.getElementById("detalheCliente");
   div.style.display = "block";
-  div.innerHTML = `<b>Nome:</b> ${cliente.nome}<br><b>Telefone:</b> ${cliente.telefone}`;
+  const osCliente = listaOS.filter(o => o.cliente === nome);
+  let html = `<h4>Cliente: ${nome}</h4>`;
+  osCliente.forEach((o,i) => {
+    html += `
+      <div style="margin-top:10px; padding:10px; background:#f9fafb; border-radius:6px;">
+        <b>OS:</b> ${o.osnum}<br>
+        <b>Status:</b> 
+        <select id="status-${i}">
+          <option ${o.status=="Pendente"?'selected':''}>Pendente</option>
+          <option ${o.status=="Em bancada"?'selected':''}>Em bancada</option>
+          <option ${o.status=="Orçamento pronto"?'selected':''}>Orçamento pronto</option>
+          <option ${o.status=="Concluído"?'selected':''}>Concluído</option>
+        </select><br>
+        <b>Endereço:</b> <input type="text" id="endereco-${i}" value="${o.endereco}"><br>
+        <b>Telefone:</b> <input type="text" id="telefone-${i}" value="${o.telefone}"><br>
+        <b>Descrição:</b> <textarea id="desc-${i}">${o.descricao}</textarea><br>
+        <b>Valor:</b> <input type="number" id="valor-${i}" value="${o.valor}"><br>
+        <button onclick="atualizar(${i})">Atualizar</button>
+      </div>
+    `;
+  });
+  div.innerHTML = html;
+}
+
+function atualizar(i) {
+  listaOS[i] = {
+    ...listaOS[i],
+    status: document.getElementById(`status-${i}`).value,
+    endereco: document.getElementById(`endereco-${i}`).value,
+    telefone: document.getElementById(`telefone-${i}`).value,
+    descricao: document.getElementById(`desc-${i}`).value,
+    valor: document.getElementById(`valor-${i}`).value
+  };
+  localStorage.setItem("os", JSON.stringify(listaOS));
+  alert("Dados atualizados!");
+  mostrarClientes();
 }
 
 // Inicialização
-carregarClientes();
+mostrarClientes();
 </script>
 
 </body>
