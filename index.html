@@ -53,9 +53,7 @@ body {
   transition: 0.3s;
 }
 
-.sidebar a:hover {
-  background: var(--hover);
-}
+.sidebar a:hover { background: var(--hover); }
 
 /* Main content */
 .main {
@@ -113,7 +111,6 @@ button {
 
 <body>
 
-<!-- Sidebar -->
 <div class="sidebar">
   <h2>🛠 Sistema OS</h2>
   <a href="index.html">Entrada de Equipamento</a>
@@ -124,7 +121,6 @@ button {
   <a href="backup.html">Backup / Restaurar</a>
 </div>
 
-<!-- Main content -->
 <div class="main">
   <div class="card">
     <h3>Cadastro de Ordem de Serviço</h3>
@@ -146,9 +142,28 @@ button {
   </div>
 </div>
 
-<script>
-function salvarOS() {
-  let os = {
+<!-- 🔥 Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// Configuração do Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+  authDomain: "sistema-os-1284b.firebaseapp.com",
+  projectId: "sistema-os-1284b",
+  storageBucket: "sistema-os-1284b.appspot.com",
+  messagingSenderId: "1032102605721",
+  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
+};
+
+// Inicializa Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Salvar OS no Firestore
+async function salvarOS() {
+  const os = {
     osnum: document.getElementById("osnum").value,
     cliente: document.getElementById("cliente").value,
     telefone: document.getElementById("telefone").value,
@@ -158,21 +173,26 @@ function salvarOS() {
     valor: document.getElementById("valor").value
   };
 
-  // Salva no LocalStorage
-  let lista = JSON.parse(localStorage.getItem("os")) || [];
-  lista.push(os);
-  localStorage.setItem("os", JSON.stringify(lista));
+  if(!os.osnum || !os.cliente) {
+    alert("Preencha pelo menos o número da OS e o nome do cliente!");
+    return;
+  }
 
-  alert("OS salva com sucesso!");
-  
-  // Limpar formulário
-  document.getElementById("osnum").value = "";
-  document.getElementById("cliente").value = "";
-  document.getElementById("telefone").value = "";
-  document.getElementById("endereco").value = "";
-  document.getElementById("status").value = "Pendente";
-  document.getElementById("descricao").value = "";
-  document.getElementById("valor").value = "";
+  try {
+    await addDoc(collection(db, "os"), os);
+    alert("OS salva com sucesso no Firebase!");
+
+    // Limpar formulário
+    document.getElementById("osnum").value = "";
+    document.getElementById("cliente").value = "";
+    document.getElementById("telefone").value = "";
+    document.getElementById("endereco").value = "";
+    document.getElementById("status").value = "Pendente";
+    document.getElementById("descricao").value = "";
+    document.getElementById("valor").value = "";
+  } catch (e) {
+    alert("Erro ao salvar OS: " + e.message);
+  }
 }
 </script>
 
