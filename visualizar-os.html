@@ -5,44 +5,36 @@
 <title>Visualizar Ordens de Serviço</title>
 
 <style>
-:root {
-  --bg: #0f172a;
-  --primary: #2563eb;
-  --card: #ffffff;
-}
-* { box-sizing: border-box; }
 body { margin: 0; font-family: Arial; display: flex; background: #f1f5f9; }
 .sidebar {
-  width: 240px; background: var(--bg); color: #fff;
-  padding: 20px; position: fixed; height: 100vh;
+  width: 240px; background: #0f172a; color: #fff;
+  padding: 20px; height: 100vh; position: fixed;
 }
-.sidebar a {
-  display: block; color: #fff; text-decoration: none;
-  padding: 10px; border-radius: 6px; margin-bottom: 8px;
-}
-.sidebar a:hover { background: #334155; }
+.sidebar a { color: #fff; text-decoration: none; display: block; padding: 10px; }
+.sidebar a:hover { background: #334155; border-radius: 6px; }
+
 .main { margin-left: 240px; padding: 30px; width: 100%; }
 
 .card {
-  background: var(--card); padding: 20px;
-  border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,.1);
+  background: #fff; padding: 20px;
+  border-radius: 12px; margin-bottom: 30px;
 }
 
-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
 th, td { border: 1px solid #ccc; padding: 8px; }
-input, select, textarea {
-  width: 100%; padding: 6px; margin-top: 5px;
+
+input, textarea, select {
+  width: 100%; padding: 6px;
 }
+
 button {
-  padding: 6px 10px; border: none;
-  background: var(--primary); color: #fff;
+  background: #2563eb; color: #fff;
+  border: none; padding: 6px 10px;
   border-radius: 6px; cursor: pointer;
 }
 button:hover { background: #1e40af; }
 
-.search {
-  display: flex; gap: 10px; margin-bottom: 10px;
-}
+.search { display: flex; gap: 10px; margin-bottom: 10px; }
 </style>
 </head>
 
@@ -57,8 +49,10 @@ button:hover { background: #1e40af; }
 </div>
 
 <div class="main">
+
+  <!-- ORDENS ATIVAS -->
   <div class="card">
-    <h2>Ordens de Serviço</h2>
+    <h2>Ordens em Aberto</h2>
 
     <div class="search">
       <input id="busca" placeholder="Buscar por OS ou Cliente">
@@ -75,12 +69,29 @@ button:hover { background: #1e40af; }
           <th>Valor</th>
           <th>Status</th>
           <th>Observação</th>
-          <th>Ações</th>
+          <th>Ação</th>
         </tr>
       </thead>
-      <tbody id="listaOS"></tbody>
+      <tbody id="listaAbertas"></tbody>
     </table>
   </div>
+
+  <!-- ORDENS CONCLUÍDAS -->
+  <div class="card">
+    <h2>Ordens Concluídas</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>OS</th>
+          <th>Cliente</th>
+          <th>Valor</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody id="listaConcluidas"></tbody>
+    </table>
+  </div>
+
 </div>
 
 <script type="module">
@@ -104,71 +115,82 @@ let todasOS = [];
 
 // 🔹 Carregar OS
 async function carregarOS() {
-  const tbody = document.getElementById("listaOS");
-  tbody.innerHTML = "";
   todasOS = [];
+  const abertas = document.getElementById("listaAbertas");
+  const concluidas = document.getElementById("listaConcluidas");
+  abertas.innerHTML = "";
+  concluidas.innerHTML = "";
 
   const snap = await getDocs(osCollection);
-  snap.forEach(d => {
-    const os = d.data();
-    todasOS.push({ id: d.id, ...os });
-  });
+  snap.forEach(d => todasOS.push({ id: d.id, ...d.data() }));
 
   render(todasOS);
 }
 
-// 🔹 Renderizar tabela
+// 🔹 Renderizar
 function render(lista) {
-  const tbody = document.getElementById("listaOS");
-  tbody.innerHTML = "";
+  const abertas = document.getElementById("listaAbertas");
+  const concluidas = document.getElementById("listaConcluidas");
+  abertas.innerHTML = "";
+  concluidas.innerHTML = "";
 
   lista.forEach(os => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${os.osnum}</td>
-      <td><input value="${os.cliente}" id="c-${os.id}"></td>
-      <td><textarea id="d-${os.id}">${os.descricao || ""}</textarea></td>
-      <td><input type="number" value="${os.valor || 150}" id="v-${os.id}"></td>
-      <td>
-        <select id="s-${os.id}">
-          <option ${os.status=="Pendente"?"selected":""}>Pendente</option>
-          <option ${os.status=="Em bancada"?"selected":""}>Em bancada</option>
-          <option ${os.status=="Orçamento pronto"?"selected":""}>Orçamento pronto</option>
-          <option ${os.status=="Concluído"?"selected":""}>Concluído</option>
-        </select>
-      </td>
-      <td><textarea id="o-${os.id}">${os.observacao || ""}</textarea></td>
-      <td><button onclick="salvar('${os.id}')">Salvar</button></td>
-    `;
-    tbody.appendChild(tr);
+    if(os.status === "Concluído") {
+      concluidas.innerHTML += `
+        <tr>
+          <td>${os.osnum}</td>
+          <td>${os.cliente}</td>
+          <td>R$ ${(os.valor || 150).toFixed(2)}</td>
+          <td>${os.observacao || ""}</td>
+        </tr>
+      `;
+    } else {
+      abertas.innerHTML += `
+        <tr>
+          <td>${os.osnum}</td>
+          <td><input id="c-${os.id}" value="${os.cliente}"></td>
+          <td><textarea id="d-${os.id}">${os.descricao || ""}</textarea></td>
+          <td><input type="number" id="v-${os.id}" value="${os.valor || 150}"></td>
+          <td>
+            <select id="s-${os.id}">
+              <option ${os.status=="Pendente"?"selected":""}>Pendente</option>
+              <option ${os.status=="Em bancada"?"selected":""}>Em bancada</option>
+              <option ${os.status=="Orçamento pronto"?"selected":""}>Orçamento pronto</option>
+              <option ${os.status=="Concluído"?"selected":""}>Concluído</option>
+            </select>
+          </td>
+          <td><textarea id="o-${os.id}">${os.observacao || ""}</textarea></td>
+          <td><button onclick="salvar('${os.id}')">Salvar</button></td>
+        </tr>
+      `;
+    }
   });
 }
 
 // 🔹 Salvar edição
 async function salvar(id) {
-  try {
-    await updateDoc(doc(db, "os", id), {
-      cliente: document.getElementById(`c-${id}`).value,
-      descricao: document.getElementById(`d-${id}`).value,
-      valor: Number(document.getElementById(`v-${id}`).value),
-      status: document.getElementById(`s-${id}`).value,
-      observacao: document.getElementById(`o-${id}`).value
-    });
-    alert("OS atualizada!");
-  } catch(e) {
-    alert("Erro ao salvar");
-    console.error(e);
-  }
+  const status = document.getElementById(`s-${id}`).value;
+  const financeiroStatus = status === "Concluído" ? "recebido" : "pendente";
+
+  await updateDoc(doc(db, "os", id), {
+    cliente: document.getElementById(`c-${id}`).value,
+    descricao: document.getElementById(`d-${id}`).value,
+    valor: Number(document.getElementById(`v-${id}`).value),
+    status,
+    observacao: document.getElementById(`o-${id}`).value,
+    financeiroStatus
+  });
+
+  carregarOS();
 }
 
 // 🔹 Pesquisa
 function filtrar() {
   const termo = document.getElementById("busca").value.toLowerCase();
-  const filtrado = todasOS.filter(os =>
+  render(todasOS.filter(os =>
     os.cliente.toLowerCase().includes(termo) ||
     String(os.osnum).includes(termo)
-  );
-  render(filtrado);
+  ));
 }
 
 window.salvar = salvar;
