@@ -11,6 +11,10 @@
   --card-bg: #ffffff;
   --text-color: #f1f5f9;
   --hover: #334155;
+  --pendente: #dc2626;
+  --em-bancada: #2563eb;
+  --orcamento: #facc15;
+  --concluido: #16a34a;
 }
 
 * { box-sizing: border-box; }
@@ -50,6 +54,9 @@ input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border
   margin-bottom: 10px;
   border-radius: 8px;
   cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .lista-os .item:hover { background: #e2e8f0; }
@@ -62,6 +69,12 @@ input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border
   display: none;
 }
 
+.status {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: bold;
+  color: #fff;
+}
 </style>
 </head>
 <body>
@@ -88,9 +101,33 @@ input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border
   </div>
 </div>
 
-<script>
-let listaOS = JSON.parse(localStorage.getItem("os")) || [];
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// Config Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+  authDomain: "sistema-os-1284b.firebaseapp.com",
+  projectId: "sistema-os-1284b",
+  storageBucket: "sistema-os-1284b.appspot.com",
+  messagingSenderId: "1032102605721",
+  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let listaOS = [];
+
+// Carregar todas as OS do Firestore
+async function carregarOS() {
+  const snapshot = await getDocs(collection(db, "os"));
+  listaOS = snapshot.docs.map(docSnap => docSnap.data());
+  mostrarOS();
+}
+
+// Mostrar OS filtradas
 function mostrarOS(filtro="") {
   const div = document.getElementById("listaOS");
   div.innerHTML = "";
@@ -100,13 +137,22 @@ function mostrarOS(filtro="") {
     o.osnum.toString().includes(filtro)
   );
 
-  filtrados.forEach((o, i) => {
+  filtrados.forEach(o => {
+    let corStatus = "";
+    switch(o.status) {
+      case "Pendente": corStatus = "var(--pendente)"; break;
+      case "Em bancada": corStatus = "var(--em-bancada)"; break;
+      case "Orçamento pronto": corStatus = "var(--orcamento)"; break;
+      case "Concluído": corStatus = "var(--concluido)"; break;
+      default: corStatus = "#999";
+    }
+
     const item = document.createElement("div");
     item.className = "item";
     item.innerHTML = `
-      <b>Cliente:</b> ${o.cliente} | 
-      <b>OS:</b> ${o.osnum} | 
-      <b>Status:</b> ${o.status}
+      <span><b>Cliente:</b> ${o.cliente}<br>
+      <b>OS:</b> ${o.osnum}<br>
+      <b>Status:</b> <span class="status" style="background:${corStatus}">${o.status}</span></span>
       <div class="descricao">
         <b>Descrição:</b> ${o.descricao}<br>
         <b>Valor:</b> R$ ${o.valor}<br>
@@ -131,8 +177,8 @@ document.getElementById("pesquisa").addEventListener("input", (e)=>{
   mostrarOS(e.target.value);
 });
 
-// Mostrar todas ao carregar
-mostrarOS();
+// Inicializa
+carregarOS();
 </script>
 
 </body>
