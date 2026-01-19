@@ -22,7 +22,6 @@ body {
   background: #f1f5f9;
 }
 
-/* Sidebar */
 .sidebar {
   width: 240px;
   height: 100vh;
@@ -33,118 +32,107 @@ body {
   padding: 20px;
   position: fixed;
 }
+
 .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
 .sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: var(--text-color); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
 .sidebar a:hover { background: var(--hover); }
 
-/* Main */
 .main { margin-left: 240px; padding: 30px; flex: 1; }
 
-/* Cards */
 .card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
 h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
 
-/* Lista */
-.lista-os { list-style: none; padding: 0; margin: 0; }
-.lista-os li { background: #f1f5f9; margin-bottom: 10px; padding: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-.lista-os li:hover { background: #e2e8f0; }
+input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
 
-#descricaoDetalhe { margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 8px; display: none; }
+.lista-os .item {
+  background: #f9fafb;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
 
-input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cbd5e1; }
+.lista-os .item:hover { background: #e2e8f0; }
+
+.descricao {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  display: none;
+}
+
 </style>
 </head>
 <body>
 
-<!-- Sidebar -->
 <div class="sidebar">
   <h2>🛠 Sistema OS</h2>
   <a href="index.html">Entrada de Equipamento</a>
-  <a href="clientes.html">Cadastro de Clientes</a>
+  <a href="clientes.html">Clientes / Serviços</a>
   <a href="visualizar-os.html">Visualizar OS</a>
   <a href="financeiro.html">Financeiro</a>
   <a href="produtos.html">Produtos</a>
   <a href="backup.html">Backup / Restaurar</a>
 </div>
 
-<!-- Main -->
 <div class="main">
   <div class="card">
     <h3>Pesquisar OS</h3>
-    <input type="text" id="pesquisa" placeholder="Digite OS ou nome do cliente" oninput="filtrarOS()">
-    <ul class="lista-os" id="listaOS"></ul>
-    <div id="descricaoDetalhe"></div>
+    <input type="text" id="pesquisa" placeholder="Digite o nome do cliente ou número da OS">
+  </div>
+
+  <div class="card">
+    <h3>Ordens de Serviço</h3>
+    <div class="lista-os" id="listaOS"></div>
   </div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script>
+let listaOS = JSON.parse(localStorage.getItem("os")) || [];
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
-  authDomain: "sistema-os-1284b.firebaseapp.com",
-  projectId: "sistema-os-1284b",
-  storageBucket: "sistema-os-1284b.appspot.com",
-  messagingSenderId: "1032102605721",
-  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
-};
+function mostrarOS(filtro="") {
+  const div = document.getElementById("listaOS");
+  div.innerHTML = "";
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let osLista = [];
-
-// Carregar OS do Firebase
-async function carregarOS() {
-  const snapshot = await getDocs(collection(db,"ordens_servico"));
-  osLista = [];
-  snapshot.forEach(doc => {
-    osLista.push(doc.data());
-  });
-  mostrarOS(osLista);
-}
-
-// Mostrar lista resumida
-function mostrarOS(lista) {
-  const ul = document.getElementById("listaOS");
-  ul.innerHTML = "";
-  lista.forEach((os, i) => {
-    const li = document.createElement("li");
-    li.textContent = `OS ${os.osnum} - ${os.cliente} - ${os.status}`;
-    li.onclick = () => mostrarDetalhe(os);
-    ul.appendChild(li);
-  });
-}
-
-// Mostrar descrição completa
-function mostrarDetalhe(os) {
-  const div = document.getElementById("descricaoDetalhe");
-  div.style.display = "block";
-  div.innerHTML = `
-    <h4>Detalhes da OS ${os.osnum}</h4>
-    <p><b>Cliente:</b> ${os.cliente}</p>
-    <p><b>Telefone:</b> ${os.telefone}</p>
-    <p><b>Endereço:</b> ${os.endereco}</p>
-    <p><b>Status:</b> ${os.status}</p>
-    <p><b>Descrição:</b> ${os.descricao}</p>
-    <p><b>Valor:</b> R$ ${os.valor}</p>
-  `;
-}
-
-// Filtrar lista por pesquisa
-function filtrarOS() {
-  const termo = document.getElementById("pesquisa").value.toLowerCase();
-  const filtrado = osLista.filter(os =>
-    os.cliente.toLowerCase().includes(termo) ||
-    os.osnum.toString().includes(termo)
+  let filtrados = listaOS.filter(o => 
+    o.cliente.toLowerCase().includes(filtro.toLowerCase()) ||
+    o.osnum.toString().includes(filtro)
   );
-  mostrarOS(filtrado);
+
+  filtrados.forEach((o, i) => {
+    const item = document.createElement("div");
+    item.className = "item";
+    item.innerHTML = `
+      <b>Cliente:</b> ${o.cliente} | 
+      <b>OS:</b> ${o.osnum} | 
+      <b>Status:</b> ${o.status}
+      <div class="descricao">
+        <b>Descrição:</b> ${o.descricao}<br>
+        <b>Valor:</b> R$ ${o.valor}<br>
+        <b>Telefone:</b> ${o.telefone}<br>
+        <b>Endereço:</b> ${o.endereco}
+      </div>
+    `;
+    item.addEventListener("click", () => {
+      const desc = item.querySelector(".descricao");
+      desc.style.display = desc.style.display === "none" ? "block" : "none";
+    });
+    div.appendChild(item);
+  });
+
+  if(filtrados.length === 0) {
+    div.innerHTML = "<p>Nenhuma OS encontrada.</p>";
+  }
 }
 
-// Inicialização
-carregarOS();
-window.filtrarOS = filtrarOS;
+// Pesquisa em tempo real
+document.getElementById("pesquisa").addEventListener("input", (e)=>{
+  mostrarOS(e.target.value);
+});
+
+// Mostrar todas ao carregar
+mostrarOS();
 </script>
 
 </body>
