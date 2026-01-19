@@ -2,75 +2,93 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Sistema OS - Financeiro</title>
+<title>Financeiro</title>
+
 <style>
-:root {
-  --bg-color: #0f172a;
-  --primary: #2563eb;
-  --secondary: #1e293b;
-  --card-bg: #ffffff;
-  --text-color: #f1f5f9;
-  --hover: #334155;
+body { margin: 0; font-family: Arial; display: flex; background: #f1f5f9; }
+.sidebar {
+  width: 240px; background: #0f172a; color: #fff;
+  padding: 20px; height: 100vh; position: fixed;
 }
-* { box-sizing: border-box; }
-body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #f1f5f9; display: flex; }
-.sidebar { width: 240px; height: 100vh; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; padding: 20px; position: fixed; }
-.sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
-.sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: var(--text-color); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
-.sidebar a:hover { background: var(--hover); }
-.main { margin-left: 240px; padding: 30px; flex: 1; }
-.card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
-h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
+.sidebar a {
+  color: #fff; text-decoration: none;
+  display: block; padding: 10px;
+  border-radius: 6px;
+}
+.sidebar a:hover { background: #334155; }
+
+.main { margin-left: 240px; padding: 30px; width: 100%; }
+
+.card {
+  background: #fff; padding: 20px;
+  border-radius: 12px; margin-bottom: 20px;
+  box-shadow: 0 5px 20px rgba(0,0,0,.1);
+}
+
+.resumo {
+  display: flex; gap: 20px;
+}
+.box {
+  flex: 1; padding: 20px;
+  border-radius: 12px; color: #fff;
+}
+.recebido { background: #16a34a; }
+.receber { background: #ca8a04; }
+
 table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-table, th, td { border: 1px solid #cbd5e1; }
-th, td { padding: 10px; text-align: left; }
-#total { margin-top: 15px; font-weight: bold; font-size: 18px; }
-button { margin-top: 15px; padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; }
-button:hover { background: #1e40af; }
-@media(max-width: 768px){ .sidebar { width: 200px; } .main { margin-left: 200px; padding: 20px; } }
+th, td { border: 1px solid #ccc; padding: 8px; }
+th { background: #f1f5f9; }
 </style>
 </head>
+
 <body>
 
 <div class="sidebar">
-  <h2>🛠 Sistema OS</h2>
-  <a href="index.html">Entrada de Equipamento</a>
-  <a href="clientes.html">Cadastro de Clientes</a>
+  <h3>🛠 Sistema OS</h3>
+  <a href="index.html">Entrada</a>
+  <a href="clientes.html">Clientes</a>
   <a href="visualizar-os.html">Visualizar OS</a>
   <a href="financeiro.html">Financeiro</a>
-  <a href="produtos.html">Produtos</a>
-  <a href="backup.html">Backup / Restaurar</a>
 </div>
 
 <div class="main">
+
+  <!-- RESUMO -->
+  <div class="card resumo">
+    <div class="box recebido">
+      <h3>Total Recebido</h3>
+      <h1 id="totalRecebido">R$ 0,00</h1>
+    </div>
+
+    <div class="box receber">
+      <h3>Total a Receber</h3>
+      <h1 id="totalReceber">R$ 0,00</h1>
+    </div>
+  </div>
+
+  <!-- TABELA FINANCEIRA -->
   <div class="card">
-    <h3>Financeiro</h3>
-    <p>Resumo de receitas e despesas:</p>
+    <h2>Detalhamento Financeiro</h2>
     <table>
       <thead>
         <tr>
-          <th>OS Número</th>
+          <th>OS</th>
           <th>Cliente</th>
-          <th>Descrição</th>
-          <th>Valor (R$)</th>
           <th>Status</th>
+          <th>Valor (R$)</th>
+          <th>Situação</th>
         </tr>
       </thead>
-      <tbody id="tabela-financeiro">
-        <!-- Dados serão carregados aqui -->
-      </tbody>
+      <tbody id="tabelaFinanceiro"></tbody>
     </table>
-    <div id="total">Total: R$ 0,00</div>
-    <button id="gerarPDF">Gerar Relatório em PDF</button>
   </div>
+
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import jsPDF from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
   authDomain: "sistema-os-1284b.firebaseapp.com",
@@ -80,72 +98,50 @@ const firebaseConfig = {
   appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
 };
 
-// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const osCollection = collection(db, "os");
 
-let osList = [];
-
-// Carregar OS do Firestore
 async function carregarFinanceiro() {
-  const tabela = document.getElementById("tabela-financeiro");
-  tabela.innerHTML = "";
-  osList = [];
-  let total = 0;
+  let totalRecebido = 0;
+  let totalReceber = 0;
 
-  try {
-    const querySnapshot = await getDocs(collection(db, "os"));
-    querySnapshot.forEach(doc => {
-      const os = doc.data();
-      // Garantindo que valor seja numérico
-      const valor = parseFloat(os.valor) || 0;
-      total += valor;
-      osList.push({ ...os, valor });
+  const tbody = document.getElementById("tabelaFinanceiro");
+  tbody.innerHTML = "";
 
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
+  const snap = await getDocs(osCollection);
+  snap.forEach(docSnap => {
+    const os = docSnap.data();
+    const valor = Number(os.valor) || 150;
+
+    let situacao = "A receber";
+
+    if(os.status === "Concluído" || os.financeiroStatus === "recebido") {
+      totalRecebido += valor;
+      situacao = "Recebido";
+    } else {
+      totalReceber += valor;
+    }
+
+    tbody.innerHTML += `
+      <tr>
         <td>${os.osnum}</td>
         <td>${os.cliente}</td>
-        <td>${os.descricao || 'Serviço Padrão'}</td>
-        <td>R$ ${valor.toFixed(2)}</td>
         <td>${os.status}</td>
-      `;
-      tabela.appendChild(tr);
-    });
-    document.getElementById("total").textContent = `Total: R$ ${total.toFixed(2)}`;
-  } catch (e) {
-    alert("Erro ao carregar financeiro: " + e.message);
-  }
+        <td>R$ ${valor.toFixed(2)}</td>
+        <td>${situacao}</td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("totalRecebido").innerText =
+    `R$ ${totalRecebido.toFixed(2)}`;
+  document.getElementById("totalReceber").innerText =
+    `R$ ${totalReceber.toFixed(2)}`;
 }
 
-// Gerar PDF
-document.getElementById("gerarPDF").addEventListener("click", () => {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  doc.setFontSize(16);
-  doc.text("Relatório Financeiro", 14, 20);
-
-  let y = 30;
-  doc.setFontSize(12);
-  osList.forEach(os => {
-    doc.text(`OS: ${os.osnum}`, 14, y);
-    doc.text(`Cliente: ${os.cliente}`, 14, y + 6);
-    doc.text(`Descrição: ${os.descricao || 'Serviço Padrão'}`, 14, y + 12);
-    doc.text(`Valor: R$ ${os.valor.toFixed(2)}`, 14, y + 18);
-    doc.text(`Status: ${os.status}`, 14, y + 24);
-    y += 36;
-    if (y > 270) { doc.addPage(); y = 20; }
-  });
-  const total = osList.reduce((sum, o) => sum + o.valor, 0);
-  doc.text(`Total Geral: R$ ${total.toFixed(2)}`, 14, y + 10);
-
-  doc.save("relatorio-financeiro.pdf");
-});
-
-// Executa ao carregar
 carregarFinanceiro();
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 </body>
 </html>
