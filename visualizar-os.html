@@ -22,6 +22,7 @@ body {
   background: #f1f5f9;
 }
 
+/* Sidebar */
 .sidebar {
   width: 240px;
   height: 100vh;
@@ -32,34 +33,30 @@ body {
   padding: 20px;
   position: fixed;
 }
-
 .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
 .sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: var(--text-color); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
 .sidebar a:hover { background: var(--hover); }
 
+/* Main */
 .main { margin-left: 240px; padding: 30px; flex: 1; }
 
+/* Cards */
 .card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
 h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
 
-input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cbd5e1; }
+/* Lista */
+.lista-os { list-style: none; padding: 0; margin: 0; }
+.lista-os li { background: #f1f5f9; margin-bottom: 10px; padding: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+.lista-os li:hover { background: #e2e8f0; }
 
-.lista { margin-top: 10px; }
-.lista .item {
-  background: #f9fafb;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-}
-.lista .item span { display: block; }
-.lista .item:hover { background: #e2e8f0; }
+#descricaoDetalhe { margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 8px; display: none; }
+
+input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cbd5e1; }
 </style>
 </head>
 <body>
 
+<!-- Sidebar -->
 <div class="sidebar">
   <h2>🛠 Sistema OS</h2>
   <a href="index.html">Entrada de Equipamento</a>
@@ -70,18 +67,19 @@ input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; bor
   <a href="backup.html">Backup / Restaurar</a>
 </div>
 
+<!-- Main -->
 <div class="main">
   <div class="card">
     <h3>Pesquisar OS</h3>
-    <input type="text" id="busca" placeholder="Digite nome do cliente ou número da OS">
-    <div class="lista" id="listaOS"></div>
+    <input type="text" id="pesquisa" placeholder="Digite OS ou nome do cliente" oninput="filtrarOS()">
+    <ul class="lista-os" id="listaOS"></ul>
+    <div id="descricaoDetalhe"></div>
   </div>
 </div>
 
-<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
@@ -95,50 +93,58 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let osData = [];
+let osLista = [];
 
-// Buscar todas as OS
+// Carregar OS do Firebase
 async function carregarOS() {
-  const osSnap = await getDocs(collection(db, "ordens_servico"));
-  osData = [];
-  osSnap.forEach(doc => osData.push({ id: doc.id, ...doc.data() }));
-  exibirLista();
+  const snapshot = await getDocs(collection(db,"ordens_servico"));
+  osLista = [];
+  snapshot.forEach(doc => {
+    osLista.push(doc.data());
+  });
+  mostrarOS(osLista);
 }
 
-// Exibir lista resumida
-function exibirLista(filter="") {
-  const listaDiv = document.getElementById("listaOS");
-  listaDiv.innerHTML = "";
-
-  let filtrados = osData.filter(o => 
-    o.cliente.toLowerCase().includes(filter.toLowerCase()) ||
-    o.osnum.toString().includes(filter)
-  );
-
-  filtrados.forEach(o => {
-    const div = document.createElement("div");
-    div.className = "item";
-    div.innerHTML = `
-      <span><b>${o.cliente}</b></span>
-      <span>OS: ${o.osnum}</span>
-      <span>Status: ${o.status}</span>
-    `;
-
-    div.onclick = () => {
-      alert(`OS: ${o.osnum}\nCliente: ${o.cliente}\nTelefone: ${o.telefone}\nEndereço: ${o.endereco}\nStatus: ${o.status}\nValor: R$${o.valor}\nDescrição:\n${o.descricao}`);
-    };
-
-    listaDiv.appendChild(div);
+// Mostrar lista resumida
+function mostrarOS(lista) {
+  const ul = document.getElementById("listaOS");
+  ul.innerHTML = "";
+  lista.forEach((os, i) => {
+    const li = document.createElement("li");
+    li.textContent = `OS ${os.osnum} - ${os.cliente} - ${os.status}`;
+    li.onclick = () => mostrarDetalhe(os);
+    ul.appendChild(li);
   });
 }
 
-// Filtrar enquanto digita
-document.getElementById("busca").addEventListener("input", e => {
-  exibirLista(e.target.value);
-});
+// Mostrar descrição completa
+function mostrarDetalhe(os) {
+  const div = document.getElementById("descricaoDetalhe");
+  div.style.display = "block";
+  div.innerHTML = `
+    <h4>Detalhes da OS ${os.osnum}</h4>
+    <p><b>Cliente:</b> ${os.cliente}</p>
+    <p><b>Telefone:</b> ${os.telefone}</p>
+    <p><b>Endereço:</b> ${os.endereco}</p>
+    <p><b>Status:</b> ${os.status}</p>
+    <p><b>Descrição:</b> ${os.descricao}</p>
+    <p><b>Valor:</b> R$ ${os.valor}</p>
+  `;
+}
 
-// Inicializar
+// Filtrar lista por pesquisa
+function filtrarOS() {
+  const termo = document.getElementById("pesquisa").value.toLowerCase();
+  const filtrado = osLista.filter(os =>
+    os.cliente.toLowerCase().includes(termo) ||
+    os.osnum.toString().includes(termo)
+  );
+  mostrarOS(filtrado);
+}
+
+// Inicialização
 carregarOS();
+window.filtrarOS = filtrarOS;
 </script>
 
 </body>
