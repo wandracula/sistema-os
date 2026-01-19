@@ -3,61 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <title>Financeiro</title>
-
 <style>
-body { margin: 0; font-family: Arial; display: flex; background: #f1f5f9; }
+:root {
+  --bg-color: #0f172a;
+  --primary: #2563eb;
+  --secondary: #1e293b;
+  --card-bg: #ffffff;
+  --text-color: #f1f5f9;
+  --hover: #334155;
+  --recebido: #16a34a;
+  --receber: #ca8a04;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+body { display: flex; background: #f1f5f9; }
+
+/* MENU LATERAL */
 .sidebar {
-  width: 240px; background: #0f172a; color: #fff;
-  padding: 20px; height: 100vh; position: fixed;
+  width: 240px; height: 100vh; background: var(--bg-color);
+  color: var(--text-color); display: flex; flex-direction: column;
+  padding: 20px; position: fixed; transition: transform 0.3s ease;
 }
-.sidebar a { color: #fff; text-decoration: none; display: block; padding: 10px; }
-.sidebar a:hover { background: #334155; border-radius: 6px; }
+.sidebar h3 { text-align: center; margin-bottom: 30px; font-size: 1.3em; }
+.sidebar a {
+  display: block; padding: 12px 10px; margin-bottom: 5px; border-radius: 6px;
+  font-weight: 500; color: var(--text-color); transition: 0.3s;
+}
+.sidebar a:hover { background: var(--hover); }
 
-.main { margin-left: 240px; padding: 30px; width: 100%; }
-
-.card {
-  background: #fff; padding: 20px;
-  border-radius: 12px; margin-bottom: 20px;
+/* BOTÃO MENU MOBILE */
+.menu-toggle {
+  display: none; position: fixed; top: 15px; left: 15px;
+  background: var(--primary); border: none; padding: 10px 15px;
+  color: #fff; border-radius: 6px; font-size: 16px; cursor: pointer; z-index: 1001;
 }
 
-.filtro { display: flex; gap: 10px; margin-bottom: 15px; }
-input, select {
-  padding: 8px; border-radius: 6px; border: 1px solid #ccc;
-}
+/* CONTEÚDO PRINCIPAL */
+.main { margin-left: 240px; padding: 30px; flex: 1; transition: margin-left 0.3s ease; }
+.card { background: var(--card-bg); padding: 25px; border-radius: 14px; margin-bottom: 25px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
 
-button {
-  background: #2563eb; color: #fff;
-  border: none; padding: 8px 14px;
-  border-radius: 6px; cursor: pointer;
-}
+.filtro { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+input, select { padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; flex: 1; min-width: 120px; }
+button { padding: 10px 16px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; background: var(--primary); color: #fff; }
 button:hover { background: #1e40af; }
 
-.resumo { display: flex; gap: 20px; }
+/* RESUMO FINANCEIRO */
+.resumo { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; }
 .box {
-  flex: 1; padding: 20px;
-  border-radius: 12px; color: #fff;
+  flex: 1; padding: 20px; border-radius: 12px; color: #fff;
+  min-width: 150px;
 }
-.recebido { background: #16a34a; }
-.receber { background: #ca8a04; }
+.recebido { background: var(--recebido); }
+.receber { background: var(--receber); }
 
-.cliente {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  margin-top: 15px;
-  padding: 15px;
-}
-
+/* CLIENTES E TABELAS */
+.cliente { border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 15px; padding: 15px; overflow-x: auto; }
 .cliente h3 { margin-top: 0; }
-
-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th, td { border: 1px solid #ccc; padding: 6px; font-size: 14px; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 400px; }
+th, td { border: 1px solid #ccc; padding: 8px; font-size: 14px; text-align: left; }
 th { background: #f1f5f9; }
+
+/* RESPONSIVO */
+@media(max-width: 768px) {
+  .sidebar { transform: translateX(-260px); height: 100%; position: fixed; z-index: 1000; }
+  .sidebar.show { transform: translateX(0); }
+  .main { margin-left: 0; padding: 20px; }
+  .menu-toggle { display: block; }
+}
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
+<!-- BOTÃO MENU MOBILE -->
+<button class="menu-toggle" onclick="toggleMenu()">☰ Menu</button>
+
+<div class="sidebar" id="sidebar">
   <h3>🛠 Sistema OS</h3>
   <a href="index.html">Entrada de Equipamento</a>
   <a href="clientes.html">Cadastro de Clientes</a>
@@ -77,7 +97,7 @@ th { background: #f1f5f9; }
     <button onclick="gerarPDF()">Gerar PDF</button>
   </div>
 
-  <!-- RESUMO GERAL -->
+  <!-- RESUMO -->
   <div class="card resumo">
     <div class="box recebido">
       <h3>Total Recebido</h3>
@@ -137,30 +157,18 @@ function render(lista) {
   const clientes = {};
 
   lista.forEach(os => {
-    const valor = Number(os.valor) || 150;
-    if(!clientes[os.cliente]) {
-      clientes[os.cliente] = {
-        recebido: 0,
-        receber: 0,
-        ordens: []
-      };
-    }
-
+    const valor = Number(os.valor) || 0;
+    if(!clientes[os.cliente]) clientes[os.cliente] = { recebido:0, receber:0, ordens:[] };
     if(os.status === "Concluído") {
-      clientes[os.cliente].recebido += valor;
-      totalRecebido += valor;
+      clientes[os.cliente].recebido += valor; totalRecebido += valor;
     } else {
-      clientes[os.cliente].receber += valor;
-      totalReceber += valor;
+      clientes[os.cliente].receber += valor; totalReceber += valor;
     }
-
     clientes[os.cliente].ordens.push({ ...os, valor });
   });
 
-  document.getElementById("totalRecebido").innerText =
-    `R$ ${totalRecebido.toFixed(2)}`;
-  document.getElementById("totalReceber").innerText =
-    `R$ ${totalReceber.toFixed(2)}`;
+  document.getElementById("totalRecebido").innerText = `R$ ${totalRecebido.toFixed(2)}`;
+  document.getElementById("totalReceber").innerText = `R$ ${totalReceber.toFixed(2)}`;
 
   const container = document.getElementById("relatorioClientes");
   container.innerHTML = "";
@@ -172,14 +180,10 @@ function render(lista) {
         <h3>${nome}</h3>
         <p><b>Recebido:</b> R$ ${c.recebido.toFixed(2)} |
            <b>A receber:</b> R$ ${c.receber.toFixed(2)}</p>
-
         <table>
           <thead>
             <tr>
-              <th>Data</th>
-              <th>OS</th>
-              <th>Status</th>
-              <th>Valor</th>
+              <th>Data</th><th>OS</th><th>Status</th><th>Valor</th>
             </tr>
           </thead>
           <tbody>
@@ -189,12 +193,10 @@ function render(lista) {
                 <td>${o.osnum}</td>
                 <td>${o.status}</td>
                 <td>R$ ${o.valor.toFixed(2)}</td>
-              </tr>
-            `).join("")}
+              </tr>`).join("")}
           </tbody>
         </table>
-      </div>
-    `;
+      </div>`;
   });
 }
 
@@ -202,10 +204,8 @@ function aplicarFiltro() {
   const i = document.getElementById("dataInicio").value;
   const f = document.getElementById("dataFim").value;
   if(!i || !f) return alert("Selecione o período");
-
   const di = new Date(i);
   const df = new Date(f + "T23:59:59");
-
   render(todasOS.filter(o => o.data >= di && o.data <= df));
 }
 
@@ -213,35 +213,29 @@ function gerarPDF() {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
   let y = 15;
-
   pdf.setFontSize(16);
-  pdf.text("RELATÓRIO FINANCEIRO POR CLIENTE", 14, y);
-  y += 8;
-
+  pdf.text("RELATÓRIO FINANCEIRO POR CLIENTE", 14, y); y+=8;
   pdf.setFontSize(10);
-  pdf.text(`Emitido em: ${new Date().toLocaleDateString()}`, 14, y);
-  y += 10;
+  pdf.text(`Emitido em: ${new Date().toLocaleDateString()}`, 14, y); y+=10;
 
   document.querySelectorAll(".cliente").forEach(div => {
     const linhas = div.innerText.split("\n");
     linhas.forEach(l => {
-      if(y > 280) { pdf.addPage(); y = 15; }
-      pdf.text(l, 14, y);
-      y += 6;
+      if(y > 280){ pdf.addPage(); y=15; }
+      pdf.text(l, 14, y); y+=6;
     });
-    y += 6;
+    y+=6;
   });
-
   pdf.save("relatorio-financeiro-clientes.pdf");
 }
+
+// MENU MOBILE
+function toggleMenu() { document.getElementById('sidebar').classList.toggle('show'); }
 
 window.aplicarFiltro = aplicarFiltro;
 window.gerarPDF = gerarPDF;
 
 carregar();
 </script>
-
 </body>
 </html>
-
-
