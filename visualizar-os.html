@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Visualizar OS</title>
+<title>Visualizar Ordens de Serviço</title>
 <style>
 :root {
   --bg-color: #0f172a;
@@ -11,70 +11,27 @@
   --card-bg: #ffffff;
   --text-color: #f1f5f9;
   --hover: #334155;
-  --pendente: #dc2626;
-  --em-bancada: #2563eb;
-  --orcamento: #facc15;
-  --concluido: #16a34a;
 }
-
 * { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  display: flex;
-  background: #f1f5f9;
-}
-
-.sidebar {
-  width: 240px;
-  height: 100vh;
-  background: var(--bg-color);
-  color: var(--text-color);
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  position: fixed;
-}
-
+body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; display: flex; background: #f1f5f9; }
+.sidebar { width: 240px; height: 100vh; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; padding: 20px; position: fixed; }
 .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
 .sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: var(--text-color); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
 .sidebar a:hover { background: var(--hover); }
-
 .main { margin-left: 240px; padding: 30px; flex: 1; }
-
 .card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
 h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
-
-input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
-
-.lista-os .item {
-  background: #f9fafb;
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.lista-os .item:hover { background: #e2e8f0; }
-
-.descricao {
-  margin-top: 10px;
-  padding: 10px;
-  background: #f1f5f9;
-  border-radius: 8px;
-  display: none;
-}
-
-.status {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-weight: bold;
-  color: #fff;
-}
+table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+table, th, td { border: 1px solid #cbd5e1; }
+th, td { padding: 10px; text-align: left; }
+input, select, textarea { width: 100%; padding: 8px; margin-top: 5px; border-radius: 6px; border: 1px solid #cbd5e1; }
+textarea { resize: none; }
+button { margin-top: 5px; padding: 8px 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; transition: 0.3s; }
+.btn-primary { background: var(--primary); }
+.btn-primary:hover { background: #1e40af; }
+.btn-secondary { background: var(--secondary); }
+.btn-secondary:hover { background: var(--primary); }
+.edit-row { display: none; background: #f1f5f9; padding: 10px; border-radius: 6px; }
 </style>
 </head>
 <body>
@@ -82,7 +39,7 @@ input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border
 <div class="sidebar">
   <h2>🛠 Sistema OS</h2>
   <a href="index.html">Entrada de Equipamento</a>
-  <a href="clientes.html">Clientes / Serviços</a>
+  <a href="clientes.html">Cadastro de Clientes</a>
   <a href="visualizar-os.html">Visualizar OS</a>
   <a href="financeiro.html">Financeiro</a>
   <a href="produtos.html">Produtos</a>
@@ -91,21 +48,29 @@ input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border
 
 <div class="main">
   <div class="card">
-    <h3>Pesquisar OS</h3>
-    <input type="text" id="pesquisa" placeholder="Digite o nome do cliente ou número da OS">
-  </div>
-
-  <div class="card">
     <h3>Ordens de Serviço</h3>
-    <div class="lista-os" id="listaOS"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>OS Nº</th>
+          <th>Cliente</th>
+          <th>Descrição</th>
+          <th>Valor (R$)</th>
+          <th>Status</th>
+          <th>Observações</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-os"></tbody>
+    </table>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Config Firebase
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
   authDomain: "sistema-os-1284b.firebaseapp.com",
@@ -117,68 +82,94 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const osCollection = collection(db, "os");
 
-let listaOS = [];
-
-// Carregar todas as OS do Firestore
+// Carregar OS
 async function carregarOS() {
-  const snapshot = await getDocs(collection(db, "os"));
-  listaOS = snapshot.docs.map(docSnap => docSnap.data());
-  mostrarOS();
+  const tabela = document.getElementById("tabela-os");
+  tabela.innerHTML = "";
+
+  const snapshot = await getDocs(osCollection);
+  snapshot.forEach(docSnap => {
+    const os = docSnap.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${os.osnum}</td>
+      <td>${os.cliente}</td>
+      <td>${os.descricao}</td>
+      <td>${os.valor || 150}</td>
+      <td>${os.status}</td>
+      <td>${os.observacao || ""}</td>
+      <td>
+        <button class="btn-primary" onclick="editarOS('${docSnap.id}', ${os.osnum}, '${os.cliente}', '${os.descricao}', ${os.valor || 150}, '${os.status}', '${os.observacao || ""}')">Editar</button>
+      </td>
+    `;
+    tabela.appendChild(tr);
+  });
 }
 
-// Mostrar OS filtradas
-function mostrarOS(filtro="") {
-  const div = document.getElementById("listaOS");
-  div.innerHTML = "";
+let editOSId = null;
 
-  let filtrados = listaOS.filter(o => 
-    o.cliente.toLowerCase().includes(filtro.toLowerCase()) ||
-    o.osnum.toString().includes(filtro)
-  );
+// Editar OS
+function editarOS(id, osnum, cliente, descricao, valor, status, observacao) {
+  editOSId = id;
 
-  filtrados.forEach(o => {
-    let corStatus = "";
-    switch(o.status) {
-      case "Pendente": corStatus = "var(--pendente)"; break;
-      case "Em bancada": corStatus = "var(--em-bancada)"; break;
-      case "Orçamento pronto": corStatus = "var(--orcamento)"; break;
-      case "Concluído": corStatus = "var(--concluido)"; break;
-      default: corStatus = "#999";
-    }
+  // Criar formulário inline de edição
+  const tr = [...document.getElementById("tabela-os").children].find(tr => tr.firstChild.textContent == osnum);
+  const editRow = document.createElement("tr");
+  editRow.className = "edit-row";
+  editRow.innerHTML = `
+    <td colspan="7">
+      <label>Cliente:</label><input id="editCliente" value="${cliente}">
+      <label>Descrição:</label><textarea id="editDescricao">${descricao}</textarea>
+      <label>Valor (R$):</label><input type="number" id="editValor" value="${valor}">
+      <label>Status:</label>
+      <select id="editStatus">
+        <option ${status==="Pendente"?"selected":""}>Pendente</option>
+        <option ${status==="Em bancada"?"selected":""}>Em bancada</option>
+        <option ${status==="Orçamento pronto"?"selected":""}>Orçamento pronto</option>
+        <option ${status==="Concluído"?"selected":""}>Concluído</option>
+      </select>
+      <label>Observações:</label><textarea id="editObs">${observacao}</textarea>
+      <button class="btn-primary" onclick="salvarEdicaoOS()">Salvar</button>
+      <button class="btn-secondary" onclick="cancelarEdicao(this)">Cancelar</button>
+    </td>
+  `;
+  tr.parentNode.insertBefore(editRow, tr.nextSibling);
+}
 
-    const item = document.createElement("div");
-    item.className = "item";
-    item.innerHTML = `
-      <span><b>Cliente:</b> ${o.cliente}<br>
-      <b>OS:</b> ${o.osnum}<br>
-      <b>Status:</b> <span class="status" style="background:${corStatus}">${o.status}</span></span>
-      <div class="descricao">
-        <b>Descrição:</b> ${o.descricao}<br>
-        <b>Valor:</b> R$ ${o.valor}<br>
-        <b>Telefone:</b> ${o.telefone}<br>
-        <b>Endereço:</b> ${o.endereco}
-      </div>
-    `;
-    item.addEventListener("click", () => {
-      const desc = item.querySelector(".descricao");
-      desc.style.display = desc.style.display === "none" ? "block" : "none";
-    });
-    div.appendChild(item);
-  });
+// Cancelar edição
+function cancelarEdicao(button) {
+  button.closest("tr").remove();
+  editOSId = null;
+}
 
-  if(filtrados.length === 0) {
-    div.innerHTML = "<p>Nenhuma OS encontrada.</p>";
+// Salvar edição
+async function salvarEdicaoOS() {
+  if(!editOSId) return;
+  const cliente = document.getElementById("editCliente").value.trim();
+  const descricao = document.getElementById("editDescricao").value.trim();
+  const valor = parseFloat(document.getElementById("editValor").value) || 150;
+  const status = document.getElementById("editStatus").value;
+  const observacao = document.getElementById("editObs").value.trim();
+
+  try {
+    await updateDoc(doc(db, "os", editOSId), { cliente, descricao, valor, status, observacao });
+    editOSId = null;
+    carregarOS();
+  } catch(e) {
+    alert("Erro ao atualizar OS: " + e.message);
   }
 }
 
-// Pesquisa em tempo real
-document.getElementById("pesquisa").addEventListener("input", (e)=>{
-  mostrarOS(e.target.value);
-});
-
 // Inicializa
 carregarOS();
+
+// Expõe funções
+window.editarOS = editarOS;
+window.salvarEdicaoOS = salvarEdicaoOS;
+window.cancelarEdicao = cancelarEdicao;
+
 </script>
 
 </body>
