@@ -18,11 +18,10 @@
 body {
   margin: 0;
   font-family: "Segoe UI", Arial, sans-serif;
-  background: #f1f5f9;
   display: flex;
+  background: #f1f5f9;
 }
 
-/* Sidebar */
 .sidebar {
   width: 240px;
   height: 100vh;
@@ -33,175 +32,126 @@ body {
   padding: 20px;
   position: fixed;
 }
+
 .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
 .sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: var(--text-color); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
 .sidebar a:hover { background: var(--hover); }
 
-/* Main content */
-.main {
-  margin-left: 240px;
-  padding: 30px;
-  flex: 1;
-}
+.main { margin-left: 240px; padding: 30px; flex: 1; }
 
-/* Cards */
-.card {
-  background: var(--card-bg);
-  padding: 25px;
-  border-radius: 14px;
-  box-shadow: 0 15px 30px rgba(0,0,0,0.05);
-  margin-bottom: 25px;
-}
-
+.card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
 h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
 
-input, select, textarea, button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-}
-
+input, select, textarea { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
 textarea { resize: none; }
 
-button {
-  cursor: pointer;
-  color: #fff;
-  border: none;
-  font-weight: bold;
-  background: var(--primary);
-  transition: 0.3s;
-}
-button:hover { background: #1e40af; }
+button { margin-top: 15px; padding: 12px 18px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #fff; transition: 0.3s; }
+.btn-primary { background: var(--primary); }
+.btn-primary:hover { background: #1e40af; }
 
-@media(max-width:768px){
-  .sidebar { width: 200px; }
-  .main { margin-left: 200px; padding: 20px; }
-}
 </style>
 </head>
 <body>
 
-<!-- Sidebar -->
 <div class="sidebar">
   <h2>🛠 Sistema OS</h2>
   <a href="index.html">Entrada de Equipamento</a>
-  <a href="clientes.html">Cadastro de Clientes</a>
+  <a href="clientes.html">Clientes / Serviços</a>
   <a href="visualizar-os.html">Visualizar OS</a>
   <a href="financeiro.html">Financeiro</a>
   <a href="produtos.html">Produtos</a>
   <a href="backup.html">Backup / Restaurar</a>
 </div>
 
-<!-- Main content -->
 <div class="main">
   <div class="card">
     <h3>Cadastro de Ordem de Serviço</h3>
-    <label>OS Número</label>
-    <input id="osnum" readonly>
 
-    <label>Cliente</label>
-    <select id="cliente">
-      <option value="">Carregando clientes...</option>
-    </select>
+    <label>Cliente existente:</label>
+    <select id="clienteSelect"></select>
 
-    <label>Telefone</label>
-    <input id="telefone" placeholder="Telefone do cliente">
+    <label>Ou cadastrar novo cliente:</label>
+    <input id="novoCliente" placeholder="Nome do Cliente">
+    <input id="telefone" placeholder="Telefone (WhatsApp)">
+    <input id="endereco" placeholder="Endereço">
 
-    <label>Endereço</label>
-    <input id="endereco" placeholder="Endereço do cliente">
-
-    <label>Status</label>
     <select id="status">
       <option>Pendente</option>
       <option>Em bancada</option>
       <option>Orçamento pronto</option>
       <option>Concluído</option>
     </select>
+    <textarea id="descricao" rows="4" placeholder="Descrição do serviço"></textarea>
+    <input id="valor" type="number" placeholder="Valor do serviço R$">
 
-    <label>Descrição do serviço</label>
-    <textarea id="descricao" rows="4"></textarea>
-
-    <label>Valor (R$)</label>
-    <input id="valor" type="number">
-
-    <button onclick="salvarOS()">Salvar OS</button>
+    <button class="btn-primary" onclick="salvarOS()">Salvar OS</button>
   </div>
 </div>
 
-<!-- Firebase e Script -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script>
+// Carrega clientes existentes no dropdown
+function carregarClientes() {
+  let clientes = JSON.parse(localStorage.getItem("os")) || [];
+  let clientesUnicos = {};
+  clientes.forEach(os => {
+    if(os.cliente) clientesUnicos[os.cliente] = os.telefone;
+  });
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
-  authDomain: "sistema-os-1284b.firebaseapp.com",
-  projectId: "sistema-os-1284b",
-  storageBucket: "sistema-os-1284b.appspot.com",
-  messagingSenderId: "1032102605721",
-  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let osCounter = 1; // contador de OS
-
-// Carrega clientes no select
-async function carregarClientesSelect() {
-  const clientesSnap = await getDocs(collection(db, "clientes"));
-  const select = document.getElementById("cliente");
-  select.innerHTML = "<option value=''>Selecione um cliente</option>";
-  clientesSnap.forEach(docSnap => {
-    const c = docSnap.data();
-    const option = document.createElement("option");
-    option.value = c.nome;
-    option.textContent = c.nome;
+  const select = document.getElementById("clienteSelect");
+  select.innerHTML = '<option value="">--Selecione--</option>';
+  Object.keys(clientesUnicos).forEach(nome => {
+    let option = document.createElement("option");
+    option.value = nome;
+    option.textContent = nome;
     select.appendChild(option);
   });
 }
 
-// Atualiza número de OS
-function gerarOSNum() {
-  document.getElementById("osnum").value = osCounter;
-  osCounter++;
+// Função para gerar próximo número de OS
+function gerarOS() {
+  let lista = JSON.parse(localStorage.getItem("os")) || [];
+  if(lista.length === 0) return 1000;
+  let numeros = lista.map(o => parseInt(o.osnum));
+  return Math.max(...numeros) + 1;
 }
 
-// Salvar OS
-async function salvarOS() {
-  const cliente = document.getElementById("cliente").value;
-  const osnum = document.getElementById("osnum").value;
-  const telefone = document.getElementById("telefone").value;
-  const endereco = document.getElementById("endereco").value;
-  const status = document.getElementById("status").value;
-  const descricao = document.getElementById("descricao").value;
-  const valor = document.getElementById("valor").value;
+function salvarOS() {
+  let clienteNome = document.getElementById("clienteSelect").value || document.getElementById("novoCliente").value.trim();
+  if(!clienteNome) { alert("Informe o cliente."); return; }
 
-  if(!cliente || !osnum) { alert("Escolha um cliente e preencha o número da OS!"); return; }
+  let telefone = document.getElementById("telefone").value;
+  let endereco = document.getElementById("endereco").value;
 
-  await addDoc(collection(db,"ordens_servico"), {
-    osnum, cliente, telefone, endereco, status, descricao, valor
-  });
+  let os = {
+    osnum: gerarOS(),
+    cliente: clienteNome,
+    telefone,
+    endereco,
+    status: document.getElementById("status").value,
+    descricao: document.getElementById("descricao").value,
+    valor: document.getElementById("valor").value
+  };
 
-  alert("OS cadastrada com sucesso!");
+  let lista = JSON.parse(localStorage.getItem("os")) || [];
+  lista.push(os);
+  localStorage.setItem("os", JSON.stringify(lista));
 
-  // Limpa campos e gera próxima OS
-  gerarOSNum();
-  document.getElementById("cliente").value = "";
+  alert("OS salva com sucesso!");
+
+  // Limpar formulário
+  document.getElementById("novoCliente").value = "";
   document.getElementById("telefone").value = "";
   document.getElementById("endereco").value = "";
-  document.getElementById("status").value = "Pendente";
   document.getElementById("descricao").value = "";
   document.getElementById("valor").value = "";
+  document.getElementById("status").value = "Pendente";
+  document.getElementById("clienteSelect").value = "";
+
+  carregarClientes();
 }
 
-// Inicialização
-carregarClientesSelect();
-gerarOSNum();
-
-window.salvarOS = salvarOS;
+// Inicializa clientes
+carregarClientes();
 </script>
 
 </body>
