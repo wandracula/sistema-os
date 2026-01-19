@@ -2,48 +2,75 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Ordens de Serviço</title>
-
+<title>Visualizar Ordens de Serviço</title>
 <style>
-body { margin: 0; font-family: Arial; display: flex; background: #f1f5f9; }
+:root {
+  --bg-color: #f1f5f9;
+  --sidebar-bg: #0f172a;
+  --primary: #2563eb;
+  --hover: #334155;
+  --card-bg: #fff;
+  --text-color: #f1f5f9;
+  --button-bg: #2563eb;
+  --button-hover: #1e40af;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+
+/* MENU LATERAL */
 .sidebar {
-  width: 240px; background: #0f172a; color: #fff;
-  padding: 20px; height: 100vh; position: fixed;
+  width: 240px; height: 100vh; background: var(--sidebar-bg);
+  color: var(--text-color); display: flex; flex-direction: column;
+  padding: 20px; position: fixed; transition: transform 0.3s ease;
 }
+.sidebar h3 { text-align: center; margin-bottom: 30px; font-size: 1.3em; }
 .sidebar a {
-  color: #fff; text-decoration: none;
-  display: block; padding: 12px;
-  border-radius: 6px;
+  display: block; padding: 12px; margin-bottom: 5px;
+  color: var(--text-color); text-decoration: none; border-radius: 6px; font-weight: 500;
 }
-.sidebar a:hover { background: #334155; }
+.sidebar a:hover { background: var(--hover); }
 
-.main { margin-left: 240px; padding: 30px; width: 100%; }
-
-.card {
-  background: #fff; padding: 20px;
-  border-radius: 12px; margin-bottom: 20px;
-}
-
-table { width: 100%; border-collapse: collapse; }
-th, td { border: 1px solid #ccc; padding: 6px; font-size: 14px; }
-
-input, textarea, select {
-  width: 100%; padding: 6px;
+/* BOTÃO MENU MOBILE */
+.menu-toggle {
+  display: none; position: fixed; top: 15px; left: 15px;
+  background: var(--primary); border: none; padding: 10px 15px;
+  color: #fff; border-radius: 6px; font-size: 16px; cursor: pointer; z-index: 1001;
 }
 
-button {
-  background: #2563eb; color: #fff;
-  border: none; padding: 6px 10px;
-  border-radius: 6px; cursor: pointer;
-  margin-bottom: 4px;
+/* CONTEÚDO PRINCIPAL */
+.main { margin-left: 240px; padding: 30px; flex: 1; transition: margin-left 0.3s ease; }
+.card { background: var(--card-bg); padding: 25px; border-radius: 14px; margin-bottom: 25px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
+
+/* TÍTULOS */
+h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
+
+/* INPUTS E BOTÕES */
+input, select, textarea, button {
+  width: 100%; padding: 10px; margin-top: 10px;
+  border-radius: 8px; border: 1px solid #cbd5e1;
 }
-button:hover { background: #1e40af; }
+button { background: var(--button-bg); color: #fff; font-weight: bold; cursor: pointer; }
+button:hover { background: var(--button-hover); }
+
+/* TABELA */
+table { width: 100%; border-collapse: collapse; margin-top: 20px; min-width: 400px; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+th { background: #f1f5f9; }
+textarea { resize: vertical; }
+
+/* RESPONSIVO */
+@media(max-width:768px){
+  .sidebar { transform: translateX(-260px); height: 100%; position: fixed; z-index: 1000; }
+  .sidebar.show { transform: translateX(0); }
+  .main { margin-left: 0; padding: 20px; }
+  .menu-toggle { display: block; }
+}
 </style>
 </head>
-
 <body>
 
-<div class="sidebar">
+<button class="menu-toggle" onclick="toggleMenu()">☰ Menu</button>
+
+<div class="sidebar" id="sidebar">
   <h3>🛠 Sistema OS</h3>
   <a href="index.html">Entrada de Equipamento</a>
   <a href="clientes.html">Cadastro de Clientes</a>
@@ -56,46 +83,48 @@ button:hover { background: #1e40af; }
 <div class="main">
 
   <div class="card">
-    <h2>Ordens em Aberto</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>OS</th>
-          <th>Cliente</th>
-          <th>Descrição</th>
-          <th>Status</th>
-          <th>Valor</th>
-          <th>Observação</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="listaAbertas"></tbody>
-    </table>
+    <h3>Ordens em Aberto</h3>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>OS</th>
+            <th>Cliente</th>
+            <th>Descrição</th>
+            <th>Status</th>
+            <th>Valor</th>
+            <th>Observação</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="listaAbertas"></tbody>
+      </table>
+    </div>
   </div>
 
   <div class="card">
-    <h2>Ordens Concluídas</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>OS</th>
-          <th>Cliente</th>
-          <th>Valor</th>
-          <th>PDF</th>
-        </tr>
-      </thead>
-      <tbody id="listaConcluidas"></tbody>
-    </table>
+    <h3>Ordens Concluídas</h3>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>OS</th>
+            <th>Cliente</th>
+            <th>Valor</th>
+            <th>PDF</th>
+          </tr>
+        </thead>
+        <tbody id="listaConcluidas"></tbody>
+      </table>
+    </div>
   </div>
 
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc } 
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
@@ -174,69 +203,49 @@ async function salvar(id) {
   carregar();
 }
 
-/* ===== PDF ORDEM (COMPACTO) ===== */
+/* PDF OS */
 function pdfOS(os) {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
-
   let y = 15;
-  pdf.setFontSize(14);
-  pdf.text("ORDEM DE SERVIÇO", 65, y);
-  y += 8;
-
+  pdf.setFontSize(14); pdf.text("ORDEM DE SERVIÇO", 65, y); y+=8;
   pdf.setFontSize(10);
   pdf.text(`OS Nº: ${os.osnum}`, 14, y);
-  pdf.text(`Data: ${new Date().toLocaleDateString()}`, 140, y);
-  y += 6;
-
-  pdf.text(`Cliente: ${os.cliente}`, 14, y); y += 6;
-  pdf.text(`Telefone: ${os.telefone || ""}`, 14, y); y += 6;
-  pdf.text(`Status: ${os.status}`, 14, y); y += 6;
-  pdf.text(`Valor: R$ ${(os.valor || 150).toFixed(2)}`, 14, y); y += 8;
-
-  pdf.text("Descrição:", 14, y); y += 6;
-  pdf.text(os.descricao || "-", 14, y); y += 8;
-
-  pdf.text("Observações:", 14, y); y += 6;
-  pdf.text(os.observacao || "-", 14, y); y += 12;
-
-  pdf.text("Assinatura do Cliente:", 14, y);
-  pdf.line(60, y, 150, y);
-
+  pdf.text(`Data: ${new Date().toLocaleDateString()}`, 140, y); y+=6;
+  pdf.text(`Cliente: ${os.cliente}`, 14, y); y+=6;
+  pdf.text(`Telefone: ${os.telefone||""}`,14,y); y+=6;
+  pdf.text(`Status: ${os.status}`,14,y); y+=6;
+  pdf.text(`Valor: R$ ${(os.valor||150).toFixed(2)}`,14,y); y+=8;
+  pdf.text("Descrição:",14,y); y+=6; pdf.text(os.descricao||"-",14,y); y+=8;
+  pdf.text("Observações:",14,y); y+=6; pdf.text(os.observacao||"-",14,y); y+=12;
+  pdf.text("Assinatura do Cliente:",14,y); pdf.line(60,y,150,y);
   pdf.save(`OS-${os.osnum}.pdf`);
 }
 
-/* ===== RECIBO (MEIA FOLHA A4) ===== */
-function recibo(os) {
+/* RECIBO */
+function recibo(os){
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
-
-  let y = 20;
-  pdf.setFontSize(14);
-  pdf.text("RECIBO", 95, y);
-  y += 10;
-
+  let y=20;
+  pdf.setFontSize(14); pdf.text("RECIBO",95,y); y+=10;
   pdf.setFontSize(10);
-  pdf.text(`Recebi de: ${os.cliente}`, 14, y); y += 6;
-  pdf.text(`Valor: R$ ${(os.valor || 150).toFixed(2)}`, 14, y); y += 6;
-  pdf.text(`Referente à OS Nº ${os.osnum}`, 14, y); y += 6;
-
-  pdf.text("Serviço prestado conforme combinado.", 14, y); y += 10;
-  pdf.text(`Data: ${new Date().toLocaleDateString()}`, 14, y); y += 12;
-
-  pdf.text("Assinatura:", 14, y);
-  pdf.line(40, y, 120, y);
-
+  pdf.text(`Recebi de: ${os.cliente}`,14,y); y+=6;
+  pdf.text(`Valor: R$ ${(os.valor||150).toFixed(2)}`,14,y); y+=6;
+  pdf.text(`Referente à OS Nº ${os.osnum}`,14,y); y+=6;
+  pdf.text("Serviço prestado conforme combinado.",14,y); y+=10;
+  pdf.text(`Data: ${new Date().toLocaleDateString()}`,14,y); y+=12;
+  pdf.text("Assinatura:",14,y); pdf.line(40,y,120,y);
   pdf.save(`Recibo-OS-${os.osnum}.pdf`);
 }
 
-window.salvar = salvar;
-window.pdfOS = pdfOS;
-window.recibo = recibo;
-
+window.salvar=salvar;
+window.pdfOS=pdfOS;
+window.recibo=recibo;
 carregar();
-</script>
 
+// MENU MOBILE
+function toggleMenu(){ document.getElementById('sidebar').classList.toggle('show'); }
+
+</script>
 </body>
 </html>
-
