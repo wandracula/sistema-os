@@ -53,6 +53,7 @@ button:hover { background: #1e40af; }
 </div>
 
 <div class="main">
+
   <div class="card">
     <h2>Ordens em Aberto</h2>
     <table>
@@ -63,7 +64,7 @@ button:hover { background: #1e40af; }
           <th>Descrição</th>
           <th>Status</th>
           <th>Valor</th>
-          <th>Obs.</th>
+          <th>Observação</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -85,15 +86,15 @@ button:hover { background: #1e40af; }
       <tbody id="listaConcluidas"></tbody>
     </table>
   </div>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore, collection, getDocs, doc, updateDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, updateDoc } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
@@ -118,7 +119,7 @@ async function carregar() {
   snap.forEach(d => {
     const os = d.data();
     const id = d.id;
-    const valor = os.valor || 150;
+    const valor = Number(os.valor) || 150;
 
     if(os.status === "Concluído") {
       concluidas.innerHTML += `
@@ -137,7 +138,7 @@ async function carregar() {
         <tr>
           <td>${os.osnum}</td>
           <td>${os.cliente}</td>
-          <td><textarea id="d-${id}">${os.descricao||""}</textarea></td>
+          <td><textarea id="d-${id}">${os.descricao || ""}</textarea></td>
           <td>
             <select id="s-${id}">
               <option ${os.status=="Pendente"?"selected":""}>Pendente</option>
@@ -147,7 +148,7 @@ async function carregar() {
             </select>
           </td>
           <td><input type="number" id="v-${id}" value="${valor}"></td>
-          <td><textarea id="o-${id}">${os.observacao||""}</textarea></td>
+          <td><textarea id="o-${id}">${os.observacao || ""}</textarea></td>
           <td>
             <button onclick="salvar('${id}')">Salvar</button>
             <button onclick='pdfOS(${JSON.stringify(os)})'>PDF OS</button>
@@ -160,6 +161,7 @@ async function carregar() {
 
 async function salvar(id) {
   const status = document.getElementById(`s-${id}`).value;
+
   await updateDoc(doc(db, "os", id), {
     descricao: document.getElementById(`d-${id}`).value,
     observacao: document.getElementById(`o-${id}`).value,
@@ -167,50 +169,62 @@ async function salvar(id) {
     status,
     financeiroStatus: status === "Concluído" ? "recebido" : "pendente"
   });
+
   carregar();
 }
 
-/* ===== PDF ORDEM ===== */
+/* ===== PDF ORDEM (COMPACTO) ===== */
 function pdfOS(os) {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
 
-  pdf.setFontSize(16);
-  pdf.text("ORDEM DE SERVIÇO", 70, 15);
+  let y = 15;
+  pdf.setFontSize(14);
+  pdf.text("ORDEM DE SERVIÇO", 65, y);
+  y += 8;
 
-  pdf.setFontSize(12);
-  pdf.text(`OS: ${os.osnum}`, 14, 30);
-  pdf.text(`Cliente: ${os.cliente}`, 14, 38);
-  pdf.text(`Telefone: ${os.telefone||""}`, 14, 46);
-  pdf.text(`Status: ${os.status}`, 14, 54);
-  pdf.text(`Valor: R$ ${(os.valor||150).toFixed(2)}`, 14, 62);
+  pdf.setFontSize(10);
+  pdf.text(`OS Nº: ${os.osnum}`, 14, y);
+  pdf.text(`Data: ${new Date().toLocaleDateString()}`, 140, y);
+  y += 6;
 
-  pdf.text("Descrição:", 14, 75);
-  pdf.text(os.descricao||"", 14, 83);
+  pdf.text(`Cliente: ${os.cliente}`, 14, y); y += 6;
+  pdf.text(`Telefone: ${os.telefone || ""}`, 14, y); y += 6;
+  pdf.text(`Status: ${os.status}`, 14, y); y += 6;
+  pdf.text(`Valor: R$ ${(os.valor || 150).toFixed(2)}`, 14, y); y += 8;
 
-  pdf.text("Observações:", 14, 115);
-  pdf.text(os.observacao||"", 14, 123);
+  pdf.text("Descrição:", 14, y); y += 6;
+  pdf.text(os.descricao || "-", 14, y); y += 8;
 
-  pdf.text("Assinatura do Cliente: ___________________________", 14, 160);
+  pdf.text("Observações:", 14, y); y += 6;
+  pdf.text(os.observacao || "-", 14, y); y += 12;
+
+  pdf.text("Assinatura do Cliente:", 14, y);
+  pdf.line(60, y, 150, y);
 
   pdf.save(`OS-${os.osnum}.pdf`);
 }
 
-/* ===== RECIBO ===== */
+/* ===== RECIBO (MEIA FOLHA A4) ===== */
 function recibo(os) {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
 
-  pdf.setFontSize(16);
-  pdf.text("RECIBO", 90, 20);
+  let y = 20;
+  pdf.setFontSize(14);
+  pdf.text("RECIBO", 95, y);
+  y += 10;
 
-  pdf.setFontSize(12);
-  pdf.text(`Recebi de ${os.cliente}`, 20, 40);
-  pdf.text(`A quantia de R$ ${(os.valor||150).toFixed(2)}`, 20, 50);
-  pdf.text("Referente a serviços prestados.", 20, 60);
+  pdf.setFontSize(10);
+  pdf.text(`Recebi de: ${os.cliente}`, 14, y); y += 6;
+  pdf.text(`Valor: R$ ${(os.valor || 150).toFixed(2)}`, 14, y); y += 6;
+  pdf.text(`Referente à OS Nº ${os.osnum}`, 14, y); y += 6;
 
-  pdf.text(`Data: ${new Date().toLocaleDateString()}`, 20, 80);
-  pdf.text("Assinatura: ___________________________", 20, 100);
+  pdf.text("Serviço prestado conforme combinado.", 14, y); y += 10;
+  pdf.text(`Data: ${new Date().toLocaleDateString()}`, 14, y); y += 12;
+
+  pdf.text("Assinatura:", 14, y);
+  pdf.line(40, y, 120, y);
 
   pdf.save(`Recibo-OS-${os.osnum}.pdf`);
 }
