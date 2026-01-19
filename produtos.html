@@ -2,105 +2,25 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Sistema OS - Produtos e Serviços</title>
+<title>Produtos e Serviços</title>
 
 <style>
-:root {
-  --bg-color: #f1f5f9;
-  --primary: #2563eb;
-  --card-bg: #ffffff;
-  --text-color: #0f172a;
-  --hover: #e2e8f0;
-  --button-bg: #2563eb;
-  --button-hover: #1e40af;
-}
-
-body {
-  margin: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: var(--bg-color);
-  color: var(--text-color);
-}
-
+body { margin:0; font-family: Arial; background:#f1f5f9; display:flex }
 .sidebar {
-  width: 240px;
-  height: 100vh;
-  background: #0f172a;
-  color: #f1f5f9;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  position: fixed;
+  width:240px; background:#0f172a; color:#fff;
+  padding:20px; height:100vh; position:fixed
 }
-
-.sidebar h2 {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.sidebar a {
-  padding: 12px;
-  margin-bottom: 10px;
-  color: #f1f5f9;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-.sidebar a:hover { background: #334155; }
-
-.main {
-  margin-left: 240px;
-  padding: 30px;
-}
-
-.card {
-  background: var(--card-bg);
-  padding: 25px;
-  border-radius: 14px;
-  box-shadow: 0 10px 20px rgba(0,0,0,.1);
-}
-
-h3 {
-  margin-top: 0;
-  border-left: 5px solid var(--primary);
-  padding-left: 10px;
-}
-
+.sidebar a { color:#fff; display:block; padding:12px; text-decoration:none }
+.sidebar a:hover { background:#334155 }
+.main { margin-left:240px; padding:30px; width:100% }
+.card { background:#fff; padding:20px; border-radius:12px }
 input, textarea, select, button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
+  width:100%; padding:10px; margin-top:8px
 }
-
-button {
-  background: var(--button-bg);
-  color: #fff;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-button:hover { background: var(--button-hover); }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-
-th, td {
-  border: 1px solid #cbd5e1;
-  padding: 10px;
-}
-
-img.produto-img {
-  width: 100px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 6px;
-}
+table { width:100%; border-collapse:collapse; margin-top:20px }
+th,td { border:1px solid #ccc; padding:8px }
+img { width:80px; border-radius:6px }
+button { background:#2563eb; color:#fff; border:none; cursor:pointer }
 </style>
 </head>
 
@@ -108,37 +28,32 @@ img.produto-img {
 
 <div class="sidebar">
   <h3>🛠 Sistema OS</h3>
-  <a href="index.html">Entrada de Equipamento</a>
-  <a href="clientes.html">Cadastro de Clientes</a>
-  <a href="visualizar-os.html">Visualizar OS</a>
+  <a href="index.html">Entrada</a>
+  <a href="clientes.html">Clientes</a>
+  <a href="visualizar-os.html">OS</a>
   <a href="financeiro.html">Financeiro</a>
   <a href="produtos.html">Produtos</a>
-  <a href="backup.html">Backup / Restaurar</a>
 </div>
 
 <div class="main">
   <div class="card">
-    <h3>Cadastro de Produtos e Serviços</h3>
+    <h3>Cadastro de Produto / Serviço</h3>
 
     <input id="nome" placeholder="Nome">
     <textarea id="descricao" placeholder="Descrição"></textarea>
-    <input id="valor" type="number" placeholder="Valor (R$)">
-    <input id="foto" placeholder="URL da foto">
+    <input id="valor" type="number" placeholder="Valor R$">
+    <input id="foto" placeholder="URL da imagem">
     <select id="categoria">
-      <option value="servico">Serviço</option>
       <option value="produto">Produto</option>
+      <option value="servico">Serviço</option>
     </select>
 
-    <button onclick="adicionarProduto()">Adicionar</button>
+    <button onclick="salvar()">Salvar</button>
 
     <table>
       <thead>
         <tr>
-          <th>Foto</th>
-          <th>Nome</th>
-          <th>Descrição</th>
-          <th>Valor</th>
-          <th>Categoria</th>
+          <th>Foto</th><th>Nome</th><th>Valor</th><th>Categoria</th>
         </tr>
       </thead>
       <tbody id="lista"></tbody>
@@ -146,73 +61,56 @@ img.produto-img {
   </div>
 </div>
 
-<!-- 🔥 FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from 
+import { getFirestore, collection, addDoc, getDocs } from
 "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = { 
-  apiKey : "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4" , 
+const firebaseConfig = {
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
   authDomain: "sistema-os-1284b.firebaseapp.com",
   projectId: "sistema-os-1284b",
-  bucket de armazenamento : "sistema-os-1284b.firebasestorage.app" , 
-  messagingSenderId : " 1032102605721" 
-  appId : "1:1032102605721:web:7eba5fc6e4eb9fc17ad908" 
+  storageBucket: "sistema-os-1284b.appspot.com",
+  messagingSenderId: "1032102605721",
+  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ➕ Adicionar produto
-window.adicionarProduto = async function () {
-  const produto = {
-    nome: nome.value,
-    descricao: descricao.value,
-    valor: valor.value,
-    foto: foto.value,
-    categoria: categoria.value
-  };
+window.salvar = async () => {
+  if (!nome.value || !valor.value) return alert("Preencha nome e valor");
 
-  if (!produto.nome || !produto.valor) {
-    alert("Preencha nome e valor");
-    return;
-  }
+  await addDoc(collection(db,"produtos"),{
+    nome:nome.value,
+    descricao:descricao.value,
+    valor:Number(valor.value),
+    foto:foto.value,
+    categoria:categoria.value,
+    ativo:true
+  });
 
-  await addDoc(collection(db, "produtos"), produto);
-  alert("Salvo com sucesso!");
-
-  nome.value = "";
-  descricao.value = "";
-  valor.value = "";
-  foto.value = "";
-  categoria.value = "servico";
-
-  carregarProdutos();
+  nome.value=""; descricao.value=""; valor.value=""; foto.value="";
+  carregar();
 };
 
-// 📥 Carregar produtos
-async function carregarProdutos() {
-  lista.innerHTML = "";
-  const snapshot = await getDocs(collection(db, "produtos"));
-
-  snapshot.forEach(doc => {
-    const p = doc.data();
-    lista.innerHTML += `
+async function carregar(){
+  lista.innerHTML="";
+  const snap = await getDocs(collection(db,"produtos"));
+  snap.forEach(d=>{
+    const p=d.data();
+    lista.innerHTML+=`
       <tr>
-        <td><img src="${p.foto || 'https://via.placeholder.com/100'}" class="produto-img"></td>
+        <td><img src="${p.foto||'https://via.placeholder.com/80'}"></td>
         <td>${p.nome}</td>
-        <td>${p.descricao || ''}</td>
-        <td>R$ ${p.valor}</td>
+        <td>R$ ${p.valor.toFixed(2)}</td>
         <td>${p.categoria}</td>
       </tr>
     `;
   });
 }
-
-carregarProdutos();
+carregar();
 </script>
 
 </body>
 </html>
-
