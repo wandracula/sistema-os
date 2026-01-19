@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sistema OS - Entrada de Equipamento</title>
+
+<style>
+:root {
+  --bg-color: #0f172a;
+  --primary: #2563eb;
+  --secondary: #1e293b;
+  --card-bg: #ffffff;
+  --text-color: #f1f5f9;
+  --hover: #334155;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f1f5f9;
+  display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: fixed;
+}
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.sidebar a {
+  display: block;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  color: var(--text-color);
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.sidebar a:hover {
+  background: var(--hover);
+}
+
+/* Main content */
+.main {
+  margin-left: 240px;
+  padding: 30px;
+  flex: 1;
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+  margin-bottom: 25px;
+}
+
+h3 {
+  margin-top: 0;
+  border-left: 5px solid var(--primary);
+  padding-left: 10px;
+}
+
+/* Form */
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
+
+textarea { resize: none; }
+
+button {
+  margin-top: 15px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
+  transition: 0.3s;
+}
+
+.btn-primary { background: var(--primary); }
+.btn-primary:hover { background: #1e40af; }
+
+@media(max-width: 768px){
+  .sidebar { width: 200px; }
+  .main { margin-left: 200px; padding: 20px; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <h2>🛠 Sistema OS</h2>
+  <a href="index.html">Entrada de Equipamento</a>
+  <a href="clientes.html">Cadastro de Clientes</a>
+  <a href="visualizar-os.html">Visualizar OS</a>
+  <a href="financeiro.html">Financeiro</a>
+  <a href="produtos.html">Produtos</a>
+  <a href="backup.html">Backup / Restaurar</a>
+</div>
+
+<!-- Main content -->
+<div class="main">
+  <div class="card">
+    <h3>Cadastro de Ordem de Serviço</h3>
+
+    <input id="osnum" placeholder="Número da OS">
+    <input id="cliente" placeholder="Nome do Cliente">
+    <input id="telefone" placeholder="Telefone (WhatsApp)">
+    <input id="endereco" placeholder="Endereço">
+    <select id="status">
+      <option>Pendente</option>
+      <option>Em bancada</option>
+      <option>Orçamento pronto</option>
+      <option>Concluído</option>
+    </select>
+    <textarea id="descricao" rows="4" placeholder="Descrição do serviço"></textarea>
+    <input id="valor" type="number" placeholder="Valor do serviço R$">
+
+    <button class="btn-primary" onclick="salvarOS()">Salvar OS</button>
+  </div>
+</div>
+
+<script>
+function salvarOS() {
+  let os = {
+    osnum: document.getElementById("osnum").value,
+    cliente: document.getElementById("cliente").value,
+    telefone: document.getElementById("telefone").value,
+    endereco: document.getElementById("endereco").value,
+    status: document.getElementById("status").value,
+    descricao: document.getElementById("descricao").value,
+    valor: document.getElementById("valor").value
+  };
+
+  // Salva no LocalStorage
+  let lista = JSON.parse(localStorage.getItem("os")) || [];
+  lista.push(os);
+  localStorage.setItem("os", JSON.stringify(lista));
+
+  alert("OS salva com sucesso!");
+  
+  // Limpar formulário
+  document.getElementById("osnum").value = "";
+  document.getElementById("cliente").value = "";
+  document.getElementById("telefone").value = "";
+  document.getElementById("endereco").value = "";
+  document.getElementById("status").value = "Pendente";
+  document.getElementById("descricao").value = "";
+  document.getElementById("valor").value = "";
+}
+</script>
+
+</body>
+</html>

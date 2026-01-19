@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sistema OS - Financeiro</title>
+<style>
+:root {
+  --bg-color: #0f172a;
+  --primary: #2563eb;
+  --secondary: #1e293b;
+  --card-bg: #ffffff;
+  --text-color: #f1f5f9;
+  --hover: #334155;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #f1f5f9; display: flex; }
+.sidebar { width: 240px; height: 100vh; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; padding: 20px; position: fixed; }
+.sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
+.sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: var(--text-color); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
+.sidebar a:hover { background: var(--hover); }
+.main { margin-left: 240px; padding: 30px; flex: 1; }
+.card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
+h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
+table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+table, th, td { border: 1px solid #cbd5e1; }
+th, td { padding: 10px; text-align: left; }
+@media(max-width: 768px){ .sidebar { width: 200px; } .main { margin-left: 200px; padding: 20px; } }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <h2>🛠 Sistema OS</h2>
+  <a href="index.html">Entrada de Equipamento</a>
+  <a href="clientes.html">Cadastro de Clientes</a>
+  <a href="visualizar-os.html">Visualizar OS</a>
+  <a href="financeiro.html">Financeiro</a>
+  <a href="produtos.html">Produtos</a>
+  <a href="backup.html">Backup / Restaurar</a>
+</div>
+
+<div class="main">
+  <div class="card">
+    <h3>Financeiro</h3>
+    <p>Resumo de receitas e despesas:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>OS Número</th>
+          <th>Cliente</th>
+          <th>Valor (R$)</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-financeiro">
+        <!-- Dados serão carregados aqui -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function carregarFinanceiro() {
+  let osLista = JSON.parse(localStorage.getItem("os")) || [];
+  let tbody = document.getElementById("tabela-financeiro");
+  tbody.innerHTML = "";
+
+  osLista.forEach(os => {
+    let tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${os.osnum}</td>
+      <td>${os.cliente}</td>
+      <td>${os.valor}</td>
+      <td>${os.status}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+carregarFinanceiro();
+</script>
+</body>
+</html>

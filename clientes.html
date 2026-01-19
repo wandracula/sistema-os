@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Cadastro de Clientes</title>
+
+<style>
+:root {
+  --bg-color: #0f172a;
+  --primary: #2563eb;
+  --secondary: #1e293b;
+  --card-bg: #ffffff;
+  --text-color: #f1f5f9;
+  --hover: #334155;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  display: flex;
+  background: #f1f5f9;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: fixed;
+}
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.sidebar a {
+  display: block;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  color: var(--text-color);
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.sidebar a:hover {
+  background: var(--hover);
+}
+
+/* Main content */
+.main {
+  margin-left: 240px;
+  padding: 30px;
+  flex: 1;
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+  margin-bottom: 25px;
+}
+
+h3 {
+  margin-top: 0;
+  border-left: 5px solid var(--primary);
+  padding-left: 10px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
+
+button {
+  margin-top: 15px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
+  background: var(--primary);
+}
+button:hover { background: #1e40af; }
+
+/* Lista de clientes */
+.lista {
+  margin-top: 20px;
+}
+
+.lista .cliente {
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lista .cliente span {
+  display: block;
+}
+
+.lista .cliente button {
+  background: var(--secondary);
+  margin: 0;
+}
+.lista .cliente button:hover { background: var(--primary); color: #fff; }
+
+</style>
+</head>
+
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <h2>🛠 Sistema OS</h2>
+  <a href="index.html">Entrada de Equipamento</a>
+  <a href="clientes.html">Cadastro de Clientes</a>
+  <a href="visualizar-os.html">Visualizar OS</a>
+  <a href="financeiro.html">Financeiro</a>
+  <a href="produtos.html">Produtos</a>
+<a href="backup.html">Backup / Restaurar</a>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="card">
+    <h3>Cadastro de Cliente</h3>
+    <input id="nome" placeholder="Nome do Cliente">
+    <input id="telefone" placeholder="Telefone (WhatsApp)">
+    <input id="endereco" placeholder="Endereço">
+    <button onclick="salvarCliente()">Salvar Cliente</button>
+  </div>
+
+  <div class="card">
+    <h3>Clientes Cadastrados</h3>
+    <div class="lista" id="listaClientes"></div>
+  </div>
+</div>
+
+<script>
+function salvarCliente(){
+  let cliente = {
+    nome: document.getElementById("nome").value,
+    telefone: document.getElementById("telefone").value,
+    endereco: document.getElementById("endereco").value
+  };
+
+  let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+  clientes.push(cliente);
+  localStorage.setItem("clientes", JSON.stringify(clientes));
+
+  document.getElementById("nome").value = "";
+  document.getElementById("telefone").value = "";
+  document.getElementById("endereco").value = "";
+
+  listarClientes();
+}
+
+function listarClientes(){
+  let lista = document.getElementById("listaClientes");
+  lista.innerHTML = "";
+  let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+  clientes.forEach((c,i)=>{
+    let div = document.createElement("div");
+    div.className = "cliente";
+    div.innerHTML = `
+      <span><b>${c.nome}</b><br>${c.telefone}<br>${c.endereco}</span>
+      <button onclick="deletar(${i})">Excluir</button>
+    `;
+    lista.appendChild(div);
+  });
+}
+
+function deletar(i){
+  let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+  clientes.splice(i,1);
+  localStorage.setItem("clientes", JSON.stringify(clientes));
+  listarClientes();
+}
+
+// Listar ao carregar
+listarClientes();
+</script>
+
+</body>
+</html>

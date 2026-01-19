@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sistema OS - Backup e Restauração</title>
+<style>
+:root {
+  --bg-color: #f1f5f9;
+  --primary: #2563eb;
+  --card-bg: #ffffff;
+  --text-color: #0f172a;
+  --hover: #1e40af;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--bg-color);
+}
+
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: #0f172a;
+  color: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: fixed;
+}
+.sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
+.sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: #f1f5f9; text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
+.sidebar a:hover { background: #334155; }
+
+.main { margin-left: 240px; padding: 30px; flex: 1; }
+.card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
+h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
+
+button, input { padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; margin-top: 10px; }
+button { cursor: pointer; background: var(--primary); color: #fff; border: none; font-weight: bold; transition: 0.3s; }
+button:hover { background: #1e40af; }
+
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>🛠 Sistema OS</h2>
+  <a href="index.html">Entrada de Equipamento</a>
+  <a href="clientes.html">Cadastro de Clientes</a>
+  <a href="visualizar-os.html">Visualizar OS</a>
+  <a href="financeiro.html">Financeiro</a>
+  <a href="produtos.html">Produtos</a>
+  <a href="backup.html">Backup / Restaurar</a>
+</div>
+
+<div class="main">
+  <div class="card">
+    <h3>Backup do Sistema</h3>
+    <p>Baixe um arquivo JSON com todos os dados do sistema:</p>
+    <button onclick="fazerBackup()">Fazer Backup</button>
+  </div>
+
+  <div class="card">
+    <h3>Restaurar Backup</h3>
+    <p>Selecione um arquivo JSON para restaurar os dados:</p>
+    <input type="file" id="arquivoBackup" accept=".json">
+    <button onclick="restaurarBackup()">Restaurar Backup</button>
+  </div>
+</div>
+
+<script>
+// Função para fazer backup
+function fazerBackup() {
+  const dados = {
+    os: JSON.parse(localStorage.getItem("os")) || [],
+    clientes: JSON.parse(localStorage.getItem("clientes")) || [],
+    produtos: JSON.parse(localStorage.getItem("produtos")) || []
+  };
+
+  const jsonString = JSON.stringify(dados, null, 2);
+  const blob = new Blob([jsonString], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "backup_sistema.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Função para restaurar backup
+function restaurarBackup() {
+  const arquivo = document.getElementById("arquivoBackup").files[0];
+  if (!arquivo) {
+    alert("Selecione um arquivo JSON para restaurar!");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const dados = JSON.parse(e.target.result);
+      if (dados.os) localStorage.setItem("os", JSON.stringify(dados.os));
+      if (dados.clientes) localStorage.setItem("clientes", JSON.stringify(dados.clientes));
+      if (dados.produtos) localStorage.setItem("produtos", JSON.stringify(dados.produtos));
+      alert("Backup restaurado com sucesso!");
+      location.reload();
+    } catch (err) {
+      alert("Arquivo inválido ou corrompido!");
+    }
+  };
+  reader.readAsText(arquivo);
+}
+</script>
+
+</body>
+</html>

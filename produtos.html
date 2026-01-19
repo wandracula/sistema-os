@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sistema OS - Produtos e Serviços</title>
+<style>
+:root {
+  --bg-color: #f1f5f9;
+  --primary: #2563eb;
+  --card-bg: #ffffff;
+  --text-color: #0f172a;
+  --hover: #e2e8f0;
+  --button-bg: #2563eb;
+  --button-hover: #1e40af;
+}
+
+body { 
+  margin: 0; 
+  font-family: "Segoe UI", Arial, sans-serif; 
+  background: var(--bg-color); 
+  color: var(--text-color); 
+}
+
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: #0f172a;
+  color: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: fixed;
+}
+
+.sidebar h2 { 
+  text-align: center; 
+  margin-bottom: 30px; 
+  font-size: 20px; 
+  font-weight: bold; 
+}
+
+.sidebar a { 
+  display: block; 
+  padding: 12px 15px; 
+  margin-bottom: 10px; 
+  color: #f1f5f9; 
+  text-decoration: none; 
+  border-radius: 8px; 
+  font-weight: 600; 
+  transition: 0.3s; 
+}
+
+.sidebar a:hover { background: #334155; }
+
+.main { margin-left: 240px; padding: 30px; flex: 1; }
+
+.card { 
+  background: var(--card-bg); 
+  padding: 25px; 
+  border-radius: 14px; 
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
+  margin-bottom: 25px; 
+}
+
+h3 { 
+  margin-top: 0; 
+  border-left: 5px solid var(--primary); 
+  padding-left: 10px; 
+}
+
+input, button, select, textarea { 
+  width: 100%; 
+  padding: 10px; 
+  margin-top: 10px; 
+  border-radius: 8px; 
+  border: 1px solid #cbd5e1; 
+}
+
+textarea { resize: none; }
+
+button { 
+  margin-top: 15px; 
+  border: none; 
+  border-radius: 8px; 
+  font-weight: bold; 
+  cursor: pointer; 
+  color: #fff; 
+  background: var(--button-bg); 
+  transition: 0.3s; 
+}
+
+button:hover { background: var(--button-hover); }
+
+table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  margin-top: 15px; 
+}
+
+table, th, td { border: 1px solid #cbd5e1; }
+
+th, td { padding: 10px; text-align: left; }
+
+img.produto-img { 
+  width: 100px; 
+  height: 80px; 
+  object-fit: cover; 
+  border-radius: 6px; 
+}
+
+@media(max-width: 768px){ 
+  .sidebar { width: 200px; } 
+  .main { margin-left: 200px; padding: 20px; } 
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>🛠 Sistema OS</h2>
+  <a href="index.html">Entrada de Equipamento</a>
+  <a href="clientes.html">Cadastro de Clientes</a>
+  <a href="visualizar-os.html">Visualizar OS</a>
+  <a href="financeiro.html">Financeiro</a>
+  <a href="produtos.html">Produtos / Serviços</a>
+  <a href="backup.html">Backup / Restaurar</a>
+</div>
+
+<div class="main">
+  <div class="card">
+    <h3>Cadastro de Produtos e Serviços</h3>
+
+    <input id="produto-nome" placeholder="Nome do Produto ou Serviço">
+    <textarea id="produto-descricao" rows="2" placeholder="Descrição detalhada"></textarea>
+    <input id="produto-valor" type="number" placeholder="Valor (R$)">
+    <input id="produto-foto" placeholder="URL da Foto">
+    <select id="produto-categoria">
+      <option value="servico">Serviço</option>
+      <option value="produto">Produto</option>
+    </select>
+    <button onclick="adicionarProduto()">Adicionar</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Foto</th>
+          <th>Nome</th>
+          <th>Descrição</th>
+          <th>Valor</th>
+          <th>Categoria</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-produtos">
+        <!-- Produtos aparecerão aqui -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// Adicionar produto/serviço
+function adicionarProduto() {
+  let produto = {
+    nome: document.getElementById("produto-nome").value,
+    descricao: document.getElementById("produto-descricao").value,
+    valor: document.getElementById("produto-valor").value,
+    foto: document.getElementById("produto-foto").value,
+    categoria: document.getElementById("produto-categoria").value
+  };
+
+  if (!produto.nome || !produto.valor) {
+    alert("Preencha pelo menos o nome e o valor!");
+    return;
+  }
+
+  let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+  produtos.push(produto);
+  localStorage.setItem("produtos", JSON.stringify(produtos));
+
+  // Limpar campos
+  document.getElementById("produto-nome").value = "";
+  document.getElementById("produto-descricao").value = "";
+  document.getElementById("produto-valor").value = "";
+  document.getElementById("produto-foto").value = "";
+  document.getElementById("produto-categoria").value = "servico";
+
+  carregarProdutos();
+}
+
+// Carregar produtos na tabela
+function carregarProdutos() {
+  let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+  let tbody = document.getElementById("tabela-produtos");
+  tbody.innerHTML = "";
+
+  produtos.forEach(p => {
+    let tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><img src="${p.foto || 'https://via.placeholder.com/100x80?text=Sem+Foto'}" class="produto-img"></td>
+      <td>${p.nome}</td>
+      <td>${p.descricao || 'Sem descrição'}</td>
+      <td>${p.valor}</td>
+      <td>${p.categoria}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Carrega produtos ao abrir
+carregarProdutos();
+</script>
+
+</body>
+</html>

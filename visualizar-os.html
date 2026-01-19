@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Visualizar OS</title>
+
+<style>
+:root {
+  --bg-color: #0f172a;
+  --primary: #2563eb;
+  --secondary: #1e293b;
+  --card-bg: #ffffff;
+  --text-color: #f1f5f9;
+  --hover: #334155;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  display: flex;
+  background: #f1f5f9;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: fixed;
+}
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.sidebar a {
+  display: block;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  color: var(--text-color);
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.sidebar a:hover {
+  background: var(--hover);
+}
+
+/* Main content */
+.main {
+  margin-left: 240px;
+  padding: 30px;
+  flex: 1;
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+  margin-bottom: 25px;
+}
+
+h3 {
+  margin-top: 0;
+  border-left: 5px solid var(--primary);
+  padding-left: 10px;
+}
+
+/* Form */
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
+
+textarea { resize: none; }
+
+button {
+  margin-top: 10px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
+  transition: 0.3s;
+}
+
+.btn-primary { background: var(--primary); }
+.btn-primary:hover { background: #1e40af; }
+
+.btn-danger { background: var(--secondary); }
+.btn-danger:hover { background: var(--primary); }
+</style>
+</head>
+
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <h2>🛠 Sistema OS</h2>
+  <a href="index.html">Entrada de Equipamento</a>
+  <a href="clientes.html">Cadastro de Clientes</a>
+  <a href="visualizar-os.html">Visualizar OS</a>
+  <a href="financeiro.html">Financeiro</a>
+  <a href="produtos.html">Produtos</a>
+  <a href="backup.html">Backup / Restaurar</a>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="card">
+    <h3>Ordens de Serviço Cadastradas</h3>
+    <div id="listaOS"></div>
+  </div>
+</div>
+
+<script>
+let listaOS = JSON.parse(localStorage.getItem("os")) || [];
+
+function listarOS() {
+  let div = document.getElementById("listaOS");
+  div.innerHTML = "";
+  listaOS.forEach((o, i) => {
+    let card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <b>OS:</b> <input value="${o.osnum}" id="osnum-${i}">
+      <b>Cliente:</b> <input value="${o.cliente}" id="cliente-${i}">
+      <b>Telefone:</b> <input value="${o.telefone}" id="telefone-${i}">
+      <b>Endereço:</b> <input value="${o.endereco}" id="endereco-${i}">
+      <b>Status:</b>
+      <select id="status-${i}">
+        <option ${o.status=="Pendente"?'selected':''}>Pendente</option>
+        <option ${o.status=="Em bancada"?'selected':''}>Em bancada</option>
+        <option ${o.status=="Orçamento pronto"?'selected':''}>Orçamento pronto</option>
+        <option ${o.status=="Concluído"?'selected':''}>Concluído</option>
+      </select>
+      <b>Descrição:</b> <textarea id="desc-${i}">${o.descricao}</textarea>
+      <b>Valor:</b> <input type="number" id="valor-${i}" value="${o.valor}">
+      <br>
+      <button class="btn-primary" onclick="atualizar(${i})">Atualizar</button>
+      <button class="btn-danger" onclick="deletar(${i})">Excluir</button>
+    `;
+    div.appendChild(card);
+  });
+}
+
+function atualizar(i) {
+  listaOS[i] = {
+    osnum: document.getElementById(`osnum-${i}`).value,
+    cliente: document.getElementById(`cliente-${i}`).value,
+    telefone: document.getElementById(`telefone-${i}`).value,
+    endereco: document.getElementById(`endereco-${i}`).value,
+    status: document.getElementById(`status-${i}`).value,
+    descricao: document.getElementById(`desc-${i}`).value,
+    valor: document.getElementById(`valor-${i}`).value
+  };
+  localStorage.setItem("os", JSON.stringify(listaOS));
+  alert("OS atualizada!");
+  listarOS();
+}
+
+function deletar(i) {
+  if(confirm("Deseja realmente excluir esta OS?")){
+    listaOS.splice(i,1);
+    localStorage.setItem("os", JSON.stringify(listaOS));
+    listarOS();
+  }
+}
+
+// Listar ao carregar
+listarOS();
+</script>
+
+</body>
+</html>
