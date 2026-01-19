@@ -28,6 +28,7 @@ th, td { padding: 10px; text-align: left; }
 </style>
 </head>
 <body>
+
 <div class="sidebar">
   <h2>🛠 Sistema OS</h2>
   <a href="index.html">Entrada de Equipamento</a>
@@ -58,25 +59,50 @@ th, td { padding: 10px; text-align: left; }
   </div>
 </div>
 
-<script>
-function carregarFinanceiro() {
-  let osLista = JSON.parse(localStorage.getItem("os")) || [];
-  let tbody = document.getElementById("tabela-financeiro");
-  tbody.innerHTML = "";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  osLista.forEach(os => {
-    let tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${os.osnum}</td>
-      <td>${os.cliente}</td>
-      <td>${os.valor}</td>
-      <td>${os.status}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+// Config Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+  authDomain: "sistema-os-1284b.firebaseapp.com",
+  projectId: "sistema-os-1284b",
+  storageBucket: "sistema-os-1284b.appspot.com",
+  messagingSenderId: "1032102605721",
+  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
+};
+
+// Inicializa Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Carregar OS do Firestore
+async function carregarFinanceiro() {
+  const tabela = document.getElementById("tabela-financeiro");
+  tabela.innerHTML = "";
+
+  try {
+    const querySnapshot = await getDocs(collection(db, "os"));
+    querySnapshot.forEach(doc => {
+      const os = doc.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${os.osnum}</td>
+        <td>${os.cliente}</td>
+        <td>${os.valor}</td>
+        <td>${os.status}</td>
+      `;
+      tabela.appendChild(tr);
+    });
+  } catch (e) {
+    alert("Erro ao carregar financeiro: " + e.message);
+  }
 }
 
+// Executa ao carregar
 carregarFinanceiro();
 </script>
+
 </body>
 </html>
