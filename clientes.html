@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Cadastro de Clientes e OS</title>
+<title>Cadastro de Clientes</title>
+
 <style>
 :root {
   --bg-color: #0f172a;
@@ -11,10 +12,6 @@
   --card-bg: #ffffff;
   --text-color: #f1f5f9;
   --hover: #334155;
-  --pendente: #dc2626;
-  --em-bancada: #2563eb;
-  --orcamento: #facc15;
-  --concluido: #16a34a;
 }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; display: flex; background: #f1f5f9; }
@@ -29,13 +26,13 @@ input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border
 button { margin-top: 15px; padding: 12px 18px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #fff; background: var(--primary); }
 button:hover { background: #1e40af; }
 .lista { margin-top: 20px; }
-.lista .cliente, .lista .os { background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-.lista .cliente span, .lista .os span { display: block; }
-.lista .cliente button { background: var(--secondary); margin: 0; }
+.lista .cliente { background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.lista .cliente span { display: block; }
+.lista .cliente button { background: var(--secondary); margin: 0 5px; padding: 5px 10px; border-radius: 6px; }
 .lista .cliente button:hover { background: var(--primary); color: #fff; }
-.status { padding: 4px 8px; border-radius: 6px; font-weight: bold; color: #fff; }
 </style>
 </head>
+
 <body>
 
 <div class="sidebar">
@@ -61,16 +58,11 @@ button:hover { background: #1e40af; }
     <h3>Clientes Cadastrados</h3>
     <div class="lista" id="listaClientes"></div>
   </div>
-
-  <div class="card">
-    <h3>Ordens de Serviço</h3>
-    <div class="lista" id="listaOS"></div>
-  </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Config Firebase
 const firebaseConfig = {
@@ -82,38 +74,73 @@ const firebaseConfig = {
   appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
 };
 
+// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const clientesCollection = collection(db, "clientes");
 
-// Salvar cliente
+let editandoId = null; // ID do cliente em edição
+
+// Salvar ou atualizar cliente
 async function salvarCliente() {
-  const nome = document.getElementById("nome").value;
-  const telefone = document.getElementById("telefone").value;
-  const endereco = document.getElementById("endereco").value;
+  const nome = document.getElementById("nome").value.trim();
+  const telefone = document.getElementById("telefone").value.trim();
+  const endereco = document.getElementById("endereco").value.trim();
+
   if(!nome) { alert("Digite o nome do cliente!"); return; }
 
-  await addDoc(collection(db, "clientes"), { nome, telefone, endereco });
-  document.getElementById("nome").value = "";
-  document.getElementById("telefone").value = "";
-  document.getElementById("endereco").value = "";
-  listarClientes();
+  try {
+    if(editandoId) {
+      // Atualizar cliente existente
+      await updateDoc(doc(db, "clientes", editandoId), { nome, telefone, endereco });
+      editandoId = null;
+    } else {
+      // Salvar novo cliente
+      await addDoc(clientesCollection, { nome, telefone, endereco });
+    }
+
+    // Limpar formulário
+    document.getElementById("nome").value = "";
+    document.getElementById("telefone").value = "";
+    document.getElementById("endereco").value = "";
+
+    listarClientes();
+  } catch(e) {
+    alert("Erro ao salvar cliente: " + e.message);
+  }
 }
 
 // Listar clientes
 async function listarClientes() {
   const lista = document.getElementById("listaClientes");
   lista.innerHTML = "";
-  const querySnapshot = await getDocs(collection(db, "clientes"));
-  querySnapshot.forEach(docSnap => {
-    const c = docSnap.data();
-    const div = document.createElement("div");
-    div.className = "cliente";
-    div.innerHTML = `
-      <span><b>${c.nome}</b><br>${c.telefone}<br>${c.endereco}</span>
-      <button onclick="deletarCliente('${docSnap.id}')">Excluir</button>
-    `;
-    lista.appendChild(div);
-  });
+
+  try {
+    const querySnapshot = await getDocs(clientesCollection);
+    querySnapshot.forEach(docSnap => {
+      const c = docSnap.data();
+      const div = document.createElement("div");
+      div.className = "cliente";
+      div.innerHTML = `
+        <span><b>${c.nome}</b><br>${c.telefone}<br>${c.endereco}</span>
+        <div>
+          <button onclick="editarCliente('${docSnap.id}', '${c.nome}', '${c.telefone}', '${c.endereco}')">Editar</button>
+          <button onclick="deletarCliente('${docSnap.id}')">Excluir</button>
+        </div>
+      `;
+      lista.appendChild(div);
+    });
+  } catch(e) {
+    alert("Erro ao carregar clientes: " + e.message);
+  }
+}
+
+// Editar cliente
+function editarCliente(id, nome, telefone, endereco) {
+  editandoId = id;
+  document.getElementById("nome").value = nome;
+  document.getElementById("telefone").value = telefone;
+  document.getElementById("endereco").value = endereco;
 }
 
 // Deletar cliente
@@ -124,38 +151,13 @@ async function deletarCliente(id) {
   }
 }
 
-// Listar OS com status colorido
-async function listarOS() {
-  const lista = document.getElementById("listaOS");
-  lista.innerHTML = "";
-  const querySnapshot = await getDocs(collection(db, "os"));
-  querySnapshot.forEach(docSnap => {
-    const o = docSnap.data();
-    let corStatus = "";
-    switch(o.status) {
-      case "Pendente": corStatus = "var(--pendente)"; break;
-      case "Em bancada": corStatus = "var(--em-bancada)"; break;
-      case "Orçamento pronto": corStatus = "var(--orcamento)"; break;
-      case "Concluído": corStatus = "var(--concluido)"; break;
-      default: corStatus = "#999";
-    }
-    const div = document.createElement("div");
-    div.className = "os";
-    div.innerHTML = `
-      <span><b>OS #${o.osnum}</b> - ${o.cliente}<br>${o.descricao}<br>Valor: R$ ${o.valor}</span>
-      <span class="status" style="background:${corStatus}">${o.status}</span>
-    `;
-    lista.appendChild(div);
-  });
-}
-
-// Inicializa listas
+// Inicializa lista de clientes
 listarClientes();
-listarOS();
 
-// Expõe funções globalmente se necessário
+// Expor funções
 window.salvarCliente = salvarCliente;
 window.deletarCliente = deletarCliente;
+window.editarCliente = editarCliente;
 </script>
 
 </body>
