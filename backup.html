@@ -11,35 +11,17 @@
   --text-color: #0f172a;
   --hover: #1e40af;
 }
-
-body {
-  margin: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: var(--bg-color);
-}
-
-.sidebar {
-  width: 240px;
-  height: 100vh;
-  background: #0f172a;
-  color: #f1f5f9;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  position: fixed;
-}
+body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: var(--bg-color); }
+.sidebar { width: 240px; height: 100vh; background: #0f172a; color: #f1f5f9; display: flex; flex-direction: column; padding: 20px; position: fixed; }
 .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
 .sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: #f1f5f9; text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
 .sidebar a:hover { background: #334155; }
-
 .main { margin-left: 240px; padding: 30px; flex: 1; }
 .card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
 h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
-
 button, input { padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; margin-top: 10px; }
 button { cursor: pointer; background: var(--primary); color: #fff; border: none; font-weight: bold; transition: 0.3s; }
 button:hover { background: #1e40af; }
-
 </style>
 </head>
 <body>
@@ -56,57 +38,83 @@ button:hover { background: #1e40af; }
 
 <div class="main">
   <div class="card">
-    <h3>Backup do Sistema</h3>
+    <h3>Backup do Sistema (Firebase)</h3>
     <p>Baixe um arquivo JSON com todos os dados do sistema:</p>
     <button onclick="fazerBackup()">Fazer Backup</button>
   </div>
 
   <div class="card">
-    <h3>Restaurar Backup</h3>
+    <h3>Restaurar Backup (Firebase)</h3>
     <p>Selecione um arquivo JSON para restaurar os dados:</p>
     <input type="file" id="arquivoBackup" accept=".json">
     <button onclick="restaurarBackup()">Restaurar Backup</button>
   </div>
 </div>
 
-<script>
-// Função para fazer backup
-function fazerBackup() {
-  const dados = {
-    os: JSON.parse(localStorage.getItem("os")) || [],
-    clientes: JSON.parse(localStorage.getItem("clientes")) || [],
-    produtos: JSON.parse(localStorage.getItem("produtos")) || []
-  };
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  const jsonString = JSON.stringify(dados, null, 2);
-  const blob = new Blob([jsonString], { type: "application/json" });
+const firebaseConfig = {
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+  authDomain: "sistema-os-1284b.firebaseapp.com",
+  projectId: "sistema-os-1284b",
+  storageBucket: "sistema-os-1284b.appspot.com",
+  messagingSenderId: "1032102605721",
+  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const colecoes = ["os","clientes","produtos"];
+
+// Fazer backup
+async function fazerBackup() {
+  let dados = {};
+  for (const nome of colecoes) {
+    const snapshot = await getDocs(collection(db, nome));
+    dados[nome] = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+  }
+
+  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "backup_sistema.json";
+  a.download = "backup_sistema_firebase.json";
   a.click();
   URL.revokeObjectURL(url);
 }
 
-// Função para restaurar backup
-function restaurarBackup() {
+// Restaurar backup
+async function restaurarBackup() {
   const arquivo = document.getElementById("arquivoBackup").files[0];
-  if (!arquivo) {
-    alert("Selecione um arquivo JSON para restaurar!");
-    return;
-  }
+  if (!arquivo) { alert("Selecione um arquivo JSON!"); return; }
 
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     try {
       const dados = JSON.parse(e.target.result);
-      if (dados.os) localStorage.setItem("os", JSON.stringify(dados.os));
-      if (dados.clientes) localStorage.setItem("clientes", JSON.stringify(dados.clientes));
-      if (dados.produtos) localStorage.setItem("produtos", JSON.stringify(dados.produtos));
+
+      for (const nome of colecoes) {
+        // Deleta todos os docs atuais
+        const snapshot = await getDocs(collection(db, nome));
+        for (const docSnap of snapshot.docs) {
+          await deleteDoc(doc(db, nome, docSnap.id));
+        }
+
+        // Adiciona os dados do backup
+        if(dados[nome]) {
+          for (const item of dados[nome]) {
+            const { id, ...rest } = item;
+            await addDoc(collection(db, nome), rest);
+          }
+        }
+      }
+
       alert("Backup restaurado com sucesso!");
-      location.reload();
-    } catch (err) {
-      alert("Arquivo inválido ou corrompido!");
+    } catch(err) {
+      alert("Erro ao restaurar backup: " + err.message);
     }
   };
   reader.readAsText(arquivo);
