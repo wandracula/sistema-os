@@ -194,8 +194,11 @@ window.filtrarProdutos = function() {
         <h4>${p.nome}</h4>
         <p>${p.descricao || ''}</p>
         <span>R$ ${Number(p.valor).toFixed(2)}</span><br><br>
-        <button onclick="solicitarProduto('${encodeURIComponent(p.nome)}', '${encodeURIComponent(p.descricao || '')}', ${Number(p.valor).toFixed(2)})">
-          Solicitar por Email
+
+
+
+
+       
         </button>
       </div>
     `;
@@ -233,3 +236,4 @@ carregarProdutos();
 </script>
 </body>
 </html>
+
