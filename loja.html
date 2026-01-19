@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Loja e Serviços - Sistema OS</title>
+
 <style>
 :root {
   --bg-color: #121212;
@@ -71,9 +72,7 @@ body {
   transition: transform 0.2s;
 }
 
-.card:hover {
-  transform: translateY(-5px);
-}
+.card:hover { transform: translateY(-5px); }
 
 .card img {
   width: 100%;
@@ -88,7 +87,6 @@ body {
 
 .card-body h4 {
   margin: 0 0 10px 0;
-  color: var(--text-color);
 }
 
 .card-body p {
@@ -109,23 +107,10 @@ body {
   color: #ccc;
 }
 
-.contact a {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.contact a:hover {
-  color: var(--button-hover);
-}
-
 .hidden { display: none; }
-
-@media(max-width: 768px){
-  .container { flex-direction: column; align-items: center; }
-}
 </style>
 </head>
+
 <body>
 
 <div class="header">💻 Serviços e Produtos - Sistema OS</div>
@@ -135,86 +120,97 @@ body {
   <button onclick="mostrarSecao('produtos')">Produtos</button>
 </div>
 
-<!-- Seção Serviços -->
+<!-- SERVIÇOS FIXOS -->
 <div id="servicos" class="container">
   <div class="card">
-    <img src="https://images.unsplash.com/photo-1581091012184-ff27e9c51755?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y29tcHV0ZXIlMjBtYWludGVuYW5jZXxlbnwwfHwwfHw%3D&ixlib=rb-4.0.3&q=80&w=400" alt="Manutenção">
+    <img src="https://images.unsplash.com/photo-1581091012184-ff27e9c51755">
     <div class="card-body">
       <h4>Manutenção de Computadores</h4>
-      <p>Diagnóstico completo e reparos de hardware e software para computadores, notebooks e periféricos.</p>
+      <p>Diagnóstico e reparos de hardware e software.</p>
       <span>Solicite orçamento</span>
     </div>
   </div>
+
   <div class="card">
-    <img src="https://images.unsplash.com/photo-1612832020672-1d9e18bb8650?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400" alt="Configuração">
+    <img src="https://images.unsplash.com/photo-1612832020672-1d9e18bb8650">
     <div class="card-body">
-      <h4>Configuração de Redes e Roteadores</h4>
-      <p>Instalação de roteadores, configuração de redes residenciais e corporativas com segurança garantida.</p>
+      <h4>Configuração de Redes</h4>
+      <p>Instalação de roteadores e redes seguras.</p>
       <span>Solicite orçamento</span>
     </div>
   </div>
+
   <div class="card">
-    <img src="https://images.unsplash.com/photo-1591696205602-d2640f05b20e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400" alt="Software">
+    <img src="https://images.unsplash.com/photo-1591696205602-d2640f05b20e">
     <div class="card-body">
-      <h4>Instalação de Programas e Formatação</h4>
-      <p>Instalação de softwares, programas essenciais e formatação completa do sistema com backup seguro.</p>
-      <span>Solicite orçamento</span>
-    </div>
-  </div>
-  <div class="card">
-    <img src="https://images.unsplash.com/photo-1558888406-5d872f034a2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400" alt="Manutenção Preventiva">
-    <div class="card-body">
-      <h4>Manutenção Preventiva</h4>
-      <p>Limpeza física, verificação de hardware, otimização de sistema e prevenção de falhas futuras.</p>
+      <h4>Formatação e Programas</h4>
+      <p>Formatação completa com backup e otimização.</p>
       <span>Solicite orçamento</span>
     </div>
   </div>
 </div>
 
-<!-- Seção Produtos -->
-<div id="produtos" class="container hidden">
-  <!-- Os produtos serão carregados aqui pelo JS -->
-</div>
+<!-- PRODUTOS DO FIREBASE -->
+<div id="produtos" class="container hidden"></div>
 
 <div class="contact">
-  Entre em contato para solicitar um orçamento: <a href="mailto:contato@sistemaos.com">contato@sistemaos.com</a>
+  Entre em contato para orçamento:
+  <strong>contato@sistemaos.com</strong>
 </div>
 
-<script>
-// Alterna entre serviços e produtos
-function mostrarSecao(secao) {
-  document.getElementById('servicos').classList.add('hidden');
-  document.getElementById('produtos').classList.add('hidden');
-  document.getElementById(secao).classList.remove('hidden');
+<!-- 🔥 FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs } from
+"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  if(secao === 'produtos') carregarProdutos();
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+  authDomain: "sistema-os-1284b.firebaseapp.com",
+  projectId: "sistema-os-1284b",
+  storageBucket: "sistema-os-1284b.appspot.com",
+  messagingSenderId: "1032102605721",
+  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
+};
 
-// Carrega produtos do LocalStorage
-function carregarProdutos() {
-  let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
-  let container = document.getElementById("produtos");
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Alternar seções
+window.mostrarSecao = function(secao) {
+  document.getElementById("servicos").classList.add("hidden");
+  document.getElementById("produtos").classList.add("hidden");
+  document.getElementById(secao).classList.remove("hidden");
+
+  if (secao === "produtos") carregarProdutos();
+};
+
+// Carregar produtos do Firebase
+async function carregarProdutos() {
+  const container = document.getElementById("produtos");
   container.innerHTML = "";
 
-  produtos.forEach(p => {
-    // Cada produto pode ter categoria "servico" ou "produto"
-    let card = document.createElement("div");
-    card.classList.add("card");
+  const snapshot = await getDocs(collection(db, "produtos"));
 
-    card.innerHTML = `
-      <img src="${p.foto || 'https://via.placeholder.com/280x180?text=Sem+Foto'}" alt="${p.nome}">
-      <div class="card-body">
-        <h4>${p.nome}</h4>
-        <p>${p.descricao || 'Sem descrição disponível.'}</p>
-        <span>R$ ${p.valor}</span>
+  snapshot.forEach(doc => {
+    const p = doc.data();
+    if (p.categoria !== "produto") return;
+
+    container.innerHTML += `
+      <div class="card">
+        <img src="${p.foto || 'https://via.placeholder.com/280x180'}">
+        <div class="card-body">
+          <h4>${p.nome}</h4>
+          <p>${p.descricao || ''}</p>
+          <span>R$ ${p.valor}</span>
+        </div>
       </div>
     `;
-    container.appendChild(card);
   });
 }
 
-// Inicializa mostrando serviços
-mostrarSecao('servicos');
+// Inicial
+mostrarSecao("servicos");
 </script>
 
 </body>
