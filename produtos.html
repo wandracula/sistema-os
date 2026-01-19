@@ -131,7 +131,7 @@ img.produto-img {
     <label>
       <input type="checkbox" id="ativo" checked> Ativo na loja
     </label>
-    <button onclick="salvarProduto()">Salvar Produto</button>
+    <button id="btnSalvar" onclick="salvarProduto()">Salvar Produto</button>
   </div>
 
   <div class="card">
@@ -169,7 +169,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-async function salvarProduto(id) {
+let editId = null;
+
+// Salvar ou atualizar produto
+async function salvarProduto() {
   const produto = {
     nome: document.getElementById("nome").value,
     descricao: document.getElementById("descricao").value,
@@ -179,14 +182,15 @@ async function salvarProduto(id) {
     ativo: document.getElementById("ativo").checked
   };
 
-  if (!produto.nome || !produto.valor) {
-    alert("Preencha nome e valor");
+  if(!produto.nome || !produto.valor) {
+    alert("Preencha nome e valor!");
     return;
   }
 
   try {
-    if(id) {
-      await updateDoc(doc(db, "produtos", id), produto);
+    if(editId) {
+      await updateDoc(doc(db, "produtos", editId), produto);
+      editId = null;
     } else {
       await addDoc(collection(db, "produtos"), produto);
     }
@@ -198,6 +202,7 @@ async function salvarProduto(id) {
   }
 }
 
+// Limpar formulário
 function limparFormulario() {
   document.getElementById("nome").value = "";
   document.getElementById("descricao").value = "";
@@ -205,13 +210,12 @@ function limparFormulario() {
   document.getElementById("foto").value = "";
   document.getElementById("categoria").value = "servico";
   document.getElementById("ativo").checked = true;
-  document.getElementById("salvarProduto").dataset.editId = "";
 }
 
+// Carregar produtos
 async function carregarProdutos() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
-
   const snapshot = await getDocs(collection(db, "produtos"));
   snapshot.forEach(docSnap => {
     const p = docSnap.data();
@@ -232,6 +236,7 @@ async function carregarProdutos() {
   });
 }
 
+// Editar produto
 window.editarProduto = async function(id) {
   const snapshot = await getDocs(collection(db, "produtos"));
   const docSnap = snapshot.docs.find(d => d.id === id);
@@ -244,10 +249,10 @@ window.editarProduto = async function(id) {
   document.getElementById("categoria").value = p.categoria;
   document.getElementById("ativo").checked = p.ativo;
 
-  // Usamos o botão salvar para atualizar
-  document.getElementById("salvarProduto").dataset.editId = id;
+  editId = id;
 }
 
+// Deletar produto
 window.deletarProduto = async function(id) {
   if(confirm("Deseja realmente excluir este produto?")) {
     await deleteDoc(doc(db, "produtos", id));
@@ -257,14 +262,6 @@ window.deletarProduto = async function(id) {
 
 // Inicial
 carregarProdutos();
-
-// Botão salvar dinâmico
-const btnSalvar = document.createElement("button");
-btnSalvar.textContent = "Salvar Produto";
-btnSalvar.id = "salvarProduto";
-btnSalvar.onclick = () => salvarProduto(btnSalvar.dataset.editId);
-document.querySelector(".card").appendChild(btnSalvar);
-
 </script>
 </body>
 </html>
