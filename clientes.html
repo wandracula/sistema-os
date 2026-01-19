@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Cadastro de Clientes</title>
-
 <style>
 :root {
   --bg-color: #0f172a;
@@ -13,29 +12,74 @@
   --text-color: #f1f5f9;
   --hover: #334155;
 }
-* { box-sizing: border-box; }
-body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; display: flex; background: #f1f5f9; }
-.sidebar { width: 240px; height: 100vh; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; padding: 20px; position: fixed; }
-.sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
-.sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: var(--text-color); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; display: flex; background: #f1f5f9; }
+a { text-decoration: none; color: inherit; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px; height: 100vh; background: var(--bg-color);
+  color: var(--text-color); display: flex; flex-direction: column;
+  padding: 20px; position: fixed; transition: transform 0.3s ease;
+}
+.sidebar h3 { text-align: center; margin-bottom: 30px; font-size: 1.3em; }
+.sidebar a {
+  display: block; padding: 12px 10px; margin-bottom: 5px; border-radius: 6px;
+  font-weight: 500; transition: 0.3s;
+}
 .sidebar a:hover { background: var(--hover); }
-.main { margin-left: 240px; padding: 30px; flex: 1; }
-.card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
-h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
+
+/* BOTÃO MOBILE */
+.menu-toggle {
+  display: none; position: fixed; top: 15px; left: 15px;
+  background: var(--primary); border: none; padding: 10px 15px;
+  color: #fff; border-radius: 6px; font-size: 16px; cursor: pointer; z-index: 1001;
+}
+
+/* CONTEÚDO PRINCIPAL */
+.main {
+  margin-left: 240px; padding: 30px; flex: 1; transition: margin-left 0.3s ease;
+}
+.card {
+  background: var(--card-bg); padding: 25px; border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px;
+}
+.card h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
 input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
-button { margin-top: 15px; padding: 12px 18px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #fff; background: var(--primary); }
+button {
+  margin-top: 15px; padding: 12px 18px; border: none; border-radius: 8px;
+  font-weight: bold; cursor: pointer; color: #fff; background: var(--primary);
+}
 button:hover { background: #1e40af; }
+
+/* LISTA DE CLIENTES */
 .lista { margin-top: 20px; }
-.lista .cliente { background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.lista .cliente {
+  background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 10px;
+  display: flex; justify-content: space-between; align-items: center;
+}
 .lista .cliente span { display: block; }
-.lista .cliente button { background: var(--secondary); margin: 0 5px; padding: 5px 10px; border-radius: 6px; }
+.lista .cliente button {
+  background: var(--secondary); margin: 0 5px; padding: 5px 10px; border-radius: 6px;
+}
 .lista .cliente button:hover { background: var(--primary); color: #fff; }
+
+/* RESPONSIVO */
+@media(max-width: 768px) {
+  .sidebar { transform: translateX(-260px); height: 100%; position: fixed; z-index: 1000; }
+  .sidebar.show { transform: translateX(0); }
+  .main { margin-left: 0; padding: 20px; }
+  .menu-toggle { display: block; }
+}
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
+<!-- BOTÃO MENU MOBILE -->
+<button class="menu-toggle" onclick="toggleMenu()">☰ Menu</button>
+
+<div class="sidebar" id="sidebar">
   <h3>🛠 Sistema OS</h3>
   <a href="index.html">Entrada de Equipamento</a>
   <a href="clientes.html">Cadastro de Clientes</a>
@@ -59,6 +103,7 @@ button:hover { background: #1e40af; }
     <h3>Clientes Cadastrados</h3>
     <div class="lista" id="listaClientes"></div>
   </div>
+
 </div>
 
 <script type="module">
@@ -74,37 +119,28 @@ const firebaseConfig = {
   messagingSenderId: "1032102605721",
   appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
 };
-
-// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const clientesCollection = collection(db, "clientes");
 
-let editandoId = null; // ID do cliente em edição
+let editandoId = null;
 
 // Salvar ou atualizar cliente
 async function salvarCliente() {
   const nome = document.getElementById("nome").value.trim();
   const telefone = document.getElementById("telefone").value.trim();
   const endereco = document.getElementById("endereco").value.trim();
-
   if(!nome) { alert("Digite o nome do cliente!"); return; }
-
   try {
     if(editandoId) {
-      // Atualizar cliente existente
       await updateDoc(doc(db, "clientes", editandoId), { nome, telefone, endereco });
       editandoId = null;
     } else {
-      // Salvar novo cliente
       await addDoc(clientesCollection, { nome, telefone, endereco });
     }
-
-    // Limpar formulário
     document.getElementById("nome").value = "";
     document.getElementById("telefone").value = "";
     document.getElementById("endereco").value = "";
-
     listarClientes();
   } catch(e) {
     alert("Erro ao salvar cliente: " + e.message);
@@ -115,7 +151,6 @@ async function salvarCliente() {
 async function listarClientes() {
   const lista = document.getElementById("listaClientes");
   lista.innerHTML = "";
-
   try {
     const querySnapshot = await getDocs(clientesCollection);
     querySnapshot.forEach(docSnap => {
@@ -152,16 +187,18 @@ async function deletarCliente(id) {
   }
 }
 
-// Inicializa lista de clientes
+// Inicializa lista
 listarClientes();
+
+// Menu mobile
+function toggleMenu() {
+  document.getElementById('sidebar').classList.toggle('show');
+}
 
 // Expor funções
 window.salvarCliente = salvarCliente;
 window.deletarCliente = deletarCliente;
 window.editarCliente = editarCliente;
 </script>
-
 </body>
 </html>
-
-
