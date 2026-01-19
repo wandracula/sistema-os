@@ -30,6 +30,21 @@ body {
   font-weight: bold;
 }
 
+.filters {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.filters input, .filters select {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+}
+
 .container {
   display: flex;
   flex-wrap: wrap;
@@ -100,10 +115,18 @@ body {
 }
 </style>
 </head>
-
 <body>
 
 <div class="header">🛒 Loja de Produtos - Sistema OS</div>
+
+<div class="filters">
+  <input type="text" id="buscar" placeholder="Buscar produto..." oninput="filtrarProdutos()">
+  <select id="categoriaFiltro" onchange="filtrarProdutos()">
+    <option value="">Todas Categorias</option>
+    <option value="produto">Produto</option>
+    <option value="servico">Serviço</option>
+  </select>
+</div>
 
 <div class="container" id="produtos"></div>
 
@@ -115,7 +138,7 @@ body {
 <!-- 🔥 FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
@@ -129,49 +152,84 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+let produtosLista = [];
+
+// Carregar produtos do Firebase
 async function carregarProdutos() {
   const container = document.getElementById("produtos");
   container.innerHTML = "";
+  produtosLista = [];
 
   try {
     const snapshot = await getDocs(collection(db, "produtos"));
-
     snapshot.forEach(docSnap => {
       const p = docSnap.data();
-      // Exibe apenas produtos ativos
       if(p.categoria !== "produto" || !p.ativo) return;
-
-      // Monta a card de produto
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <img src="${p.foto || 'https://via.placeholder.com/280x180'}">
-        <div class="card-body">
-          <h4>${p.nome}</h4>
-          <p>${p.descricao || ''}</p>
-          <span>R$ ${Number(p.valor).toFixed(2)}</span><br><br>
-          <button onclick="solicitarProduto('${encodeURIComponent(p.nome)}', '${encodeURIComponent(p.descricao || '')}', ${Number(p.valor).toFixed(2)})">
-            Solicitar por Email
-          </button>
-        </div>
-      `;
-      container.appendChild(card);
+      p.id = docSnap.id;
+      produtosLista.push(p);
     });
+
+    filtrarProdutos();
   } catch(e) {
     console.error("Erro ao carregar produtos:", e);
   }
 }
 
-// Função para abrir email
-window.solicitarProduto = (nome, descricao, valor) => {
-  const assunto = encodeURIComponent(`Solicitação de Produto: ${decodeURIComponent(nome)}`);
-  const corpo = encodeURIComponent(`Olá,\n\nGostaria de solicitar o seguinte produto:\n\nNome: ${decodeURIComponent(nome)}\nDescrição: ${decodeURIComponent(descricao)}\nValor: R$ ${valor}\n\nObrigado!`);
+// Filtrar produtos
+window.filtrarProdutos = function() {
+  const container = document.getElementById("produtos");
+  const busca = document.getElementById("buscar").value.toLowerCase();
+  const cat = document.getElementById("categoriaFiltro").value;
+
+  container.innerHTML = "";
+  produtosLista.forEach(p => {
+    if (cat && p.categoria !== cat) return;
+    if (!p.nome.toLowerCase().includes(busca)) return;
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${p.foto || 'https://via.placeholder.com/280x180'}">
+      <div class="card-body">
+        <h4>${p.nome}</h4>
+        <p>${p.descricao || ''}</p>
+        <span>R$ ${Number(p.valor).toFixed(2)}</span><br><br>
+        <button onclick="solicitarProduto('${encodeURIComponent(p.nome)}', '${encodeURIComponent(p.descricao || '')}', ${Number(p.valor).toFixed(2)})">
+          Solicitar por Email
+        </button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// Abrir email e registrar no financeiro
+window.solicitarProduto = async (nome, descricao, valor) => {
+  const produtoNome = decodeURIComponent(nome);
+  const produtoDesc = decodeURIComponent(descricao);
+
+  // Abrir cliente de email
+  const assunto = encodeURIComponent(`Solicitação de Produto: ${produtoNome}`);
+  const corpo = encodeURIComponent(`Olá,\n\nGostaria de solicitar o seguinte produto:\n\nNome: ${produtoNome}\nDescrição: ${produtoDesc}\nValor: R$ ${valor}\n\nObrigado!`);
   window.location.href = `mailto:contato@sistemaos.com?subject=${assunto}&body=${corpo}`;
+
+  // Adicionar no financeiro como "a receber"
+  try {
+    await addDoc(collection(db, "financeiro"), {
+      descricao: produtoNome,
+      valor: valor,
+      status: "a receber",
+      data: new Date().toISOString(),
+      tipo: "produto"
+    });
+    alert("Produto registrado no financeiro como 'a receber'.");
+  } catch(e) {
+    console.error("Erro ao registrar no financeiro:", e);
+  }
 };
 
 // Inicial
 carregarProdutos();
 </script>
-
 </body>
 </html>
