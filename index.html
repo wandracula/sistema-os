@@ -74,7 +74,7 @@ button:hover { background: #1e40af; }
     </select>
 
     <textarea id="descricao" placeholder="Descrição do serviço"></textarea>
-    <input id="valor" type="number" value="150">
+    <input id="valor" type="number" value="0">
 
     <button onclick="salvarOS()">Salvar Ordem de Serviço</button>
   </div>
@@ -136,7 +136,7 @@ async function salvarOS() {
   const endereco = document.getElementById("endereco").value;
   const status = document.getElementById("status").value;
   const descricao = document.getElementById("descricao").value;
-  const valor = Number(document.getElementById("valor").value) || 150;
+  const valor = Number(document.getElementById("valor").value) || ;
 
   // 👉 cadastra cliente novo se não existir
   if(novoCliente) {
@@ -165,7 +165,7 @@ async function salvarOS() {
   alert("Ordem de Serviço salva com sucesso!");
 
   document.querySelectorAll("input, textarea").forEach(el => el.value = "");
-  document.getElementById("valor").value = 150;
+  document.getElementById("valor").value = 0;
   document.getElementById("status").value = "Pendente";
   document.getElementById("clienteSelect").value = "";
 
@@ -178,4 +178,5 @@ carregarClientes();
 
 </body>
 </html>
+
 
