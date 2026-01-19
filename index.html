@@ -2,56 +2,68 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Sistema OS - Entrada de Equipamento</title>
+<title>Sistema OS - Entrada</title>
+
 <style>
-:root {
-  --bg-color: #0f172a;
-  --primary: #2563eb;
-  --secondary: #1e293b;
-  --card-bg: #ffffff;
-  --text-color: #f1f5f9;
-  --hover: #334155;
+body { margin: 0; font-family: Arial; display: flex; background: #f1f5f9; }
+.sidebar {
+  width: 240px; background: #0f172a; color: #fff;
+  padding: 20px; height: 100vh; position: fixed;
 }
-* { box-sizing: border-box; }
-body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; display: flex; background: #f1f5f9; }
-.sidebar { width: 240px; height: 100vh; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; padding: 20px; position: fixed; }
-.sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
-.sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: var(--text-color); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
-.sidebar a:hover { background: var(--hover); }
-.main { margin-left: 240px; padding: 30px; flex: 1; }
-.card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
-h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
-input, select, textarea { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
-textarea { resize: none; }
-button { margin-top: 15px; padding: 12px 18px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #fff; transition: 0.3s; }
-.btn-primary { background: var(--primary); }
-.btn-primary:hover { background: #1e40af; }
+.sidebar a {
+  color: #fff; text-decoration: none;
+  display: block; padding: 10px;
+}
+.sidebar a:hover { background: #334155; border-radius: 6px; }
+
+.main { margin-left: 240px; padding: 30px; width: 100%; }
+
+.card {
+  background: #fff; padding: 25px;
+  border-radius: 14px; max-width: 700px;
+}
+
+input, select, textarea {
+  width: 100%; padding: 10px;
+  margin-top: 10px; border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
+
+button {
+  margin-top: 15px; padding: 12px;
+  border: none; border-radius: 8px;
+  background: #2563eb; color: #fff;
+  font-weight: bold; cursor: pointer;
+}
+button:hover { background: #1e40af; }
 </style>
 </head>
+
 <body>
 
 <div class="sidebar">
-  <h2>🛠 Sistema OS</h2>
-  <a href="index.html">Entrada de Equipamento</a>
-  <a href="clientes.html">Clientes / Serviços</a>
+  <h3>🛠 Sistema OS</h3>
+  <a href="index.html">Entrada</a>
+  <a href="clientes.html">Clientes</a>
   <a href="visualizar-os.html">Visualizar OS</a>
   <a href="financeiro.html">Financeiro</a>
-  <a href="produtos.html">Produtos</a>
-  <a href="backup.html">Backup / Restaurar</a>
 </div>
 
 <div class="main">
   <div class="card">
-    <h3>Cadastro de Ordem de Serviço</h3>
+    <h2>Cadastro de Ordem de Serviço</h2>
 
-    <label>Cliente existente:</label>
-    <select id="clienteSelect"></select>
+    <label>Cliente existente</label>
+    <select id="clienteSelect">
+      <option value="">-- Selecionar --</option>
+    </select>
 
-    <label>Ou cadastrar novo cliente:</label>
-    <input id="novoCliente" placeholder="Nome do Cliente">
-    <input id="telefone" placeholder="Telefone (WhatsApp)">
+    <label>Ou novo cliente</label>
+    <input id="novoCliente" placeholder="Nome do cliente">
+    <input id="telefone" placeholder="Telefone">
     <input id="endereco" placeholder="Endereço">
 
+    <label>Status</label>
     <select id="status">
       <option>Pendente</option>
       <option>Em bancada</option>
@@ -59,18 +71,19 @@ button { margin-top: 15px; padding: 12px 18px; border: none; border-radius: 8px;
       <option>Concluído</option>
     </select>
 
-    <textarea id="descricao" rows="4" placeholder="Descrição do serviço"></textarea>
-    <input id="valor" type="number" placeholder="Valor do serviço R$">
+    <textarea id="descricao" placeholder="Descrição do serviço"></textarea>
+    <input id="valor" type="number" value="150">
 
-    <button class="btn-primary" onclick="salvarOS()">Salvar OS</button>
+    <button onclick="salvarOS()">Salvar Ordem de Serviço</button>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getFirestore, collection, addDoc, getDocs, query, where
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
   authDomain: "sistema-os-1284b.firebaseapp.com",
@@ -80,100 +93,85 @@ const firebaseConfig = {
   appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
 };
 
-// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const osCollection = collection(db, "os");
-const clientesCollection = collection(db, "clientes");
 
-// Carregar clientes existentes
+const clientesRef = collection(db, "clientes");
+const osRef = collection(db, "os");
+
+// 🔹 Carregar clientes
 async function carregarClientes() {
-  try {
-    const snapshot = await getDocs(clientesCollection);
-    const select = document.getElementById("clienteSelect");
-    select.innerHTML = '<option value="">--Selecione--</option>';
+  const snap = await getDocs(clientesRef);
+  const select = document.getElementById("clienteSelect");
+  select.innerHTML = `<option value="">-- Selecionar --</option>`;
 
-    snapshot.forEach(docSnap => {
-      const cliente = docSnap.data();
-      const option = document.createElement("option");
-      option.value = cliente.nome;
-      option.textContent = cliente.nome;
-      select.appendChild(option);
-    });
-  } catch(e) {
-    console.error("Erro ao carregar clientes: ", e);
-  }
+  snap.forEach(d => {
+    const c = d.data();
+    const opt = document.createElement("option");
+    opt.value = c.nome;
+    opt.textContent = c.nome;
+    select.appendChild(opt);
+  });
 }
 
-// Gerar próximo número de OS
+// 🔹 Gerar número da OS
 async function gerarOS() {
-  const snapshot = await getDocs(osCollection);
-  if(snapshot.empty) return 1000;
-  const numeros = snapshot.docs.map(doc => parseInt(doc.data().osnum));
-  return Math.max(...numeros) + 1;
+  const snap = await getDocs(osRef);
+  if(snap.empty) return 1000;
+  const nums = snap.docs.map(d => Number(d.data().osnum || 0));
+  return Math.max(...nums) + 1;
 }
 
-// Salvar OS
+// 🔹 Salvar OS
 async function salvarOS() {
-  let clienteSelect = document.getElementById("clienteSelect").value;
-  let novoCliente = document.getElementById("novoCliente").value.trim();
-  let clienteNome = clienteSelect || novoCliente;
+  const clienteSelect = document.getElementById("clienteSelect").value;
+  const novoCliente = document.getElementById("novoCliente").value.trim();
+  const cliente = clienteSelect || novoCliente;
 
-  if(!clienteNome) { alert("Informe o cliente!"); return; }
+  if(!cliente) return alert("Informe o cliente");
 
-  let telefone = document.getElementById("telefone").value;
-  let endereco = document.getElementById("endereco").value;
-  let status = document.getElementById("status").value;
-  let descricao = document.getElementById("descricao").value;
-  let valor = parseFloat(document.getElementById("valor").value) || 150;
+  const telefone = document.getElementById("telefone").value;
+  const endereco = document.getElementById("endereco").value;
+  const status = document.getElementById("status").value;
+  const descricao = document.getElementById("descricao").value;
+  const valor = Number(document.getElementById("valor").value) || 150;
 
-  // Salvar novo cliente na coleção clientes
+  // 👉 cadastra cliente novo se não existir
   if(novoCliente) {
-    try {
-      await addDoc(clientesCollection, { nome: clienteNome, telefone, endereco });
-    } catch(e) {
-      console.error("Erro ao salvar cliente: ", e);
-      alert("Erro ao salvar cliente. Veja o console.");
-      return;
+    const q = query(clientesRef, where("nome", "==", novoCliente));
+    const existe = await getDocs(q);
+    if(existe.empty) {
+      await addDoc(clientesRef, { nome: novoCliente, telefone, endereco });
     }
   }
 
-  // Salvar OS na coleção os
-  let osnum = await gerarOS();
-  try {
-    await addDoc(osCollection, {
-      osnum,
-      cliente: clienteNome,
-      telefone,
-      endereco,
-      status,
-      descricao,
-      valor
-    });
+  const osnum = await gerarOS();
+  const financeiroStatus = status === "Concluído" ? "recebido" : "pendente";
 
-    alert("OS salva com sucesso!");
+  await addDoc(osRef, {
+    osnum,
+    cliente,
+    telefone,
+    endereco,
+    status,
+    descricao,
+    valor,
+    financeiroStatus,
+    data: new Date()
+  });
 
-    // Limpar formulário
-    document.getElementById("novoCliente").value = "";
-    document.getElementById("telefone").value = "";
-    document.getElementById("endereco").value = "";
-    document.getElementById("descricao").value = "";
-    document.getElementById("valor").value = "";
-    document.getElementById("status").value = "Pendente";
-    document.getElementById("clienteSelect").value = "";
+  alert("Ordem de Serviço salva com sucesso!");
 
-    carregarClientes(); // Atualiza o select
-  } catch(e) {
-    console.error("Erro ao salvar OS: ", e);
-    alert("Erro ao salvar OS. Veja o console.");
-  }
+  document.querySelectorAll("input, textarea").forEach(el => el.value = "");
+  document.getElementById("valor").value = 150;
+  document.getElementById("status").value = "Pendente";
+  document.getElementById("clienteSelect").value = "";
+
+  carregarClientes();
 }
 
-// Inicializa clientes
-carregarClientes();
-
-// Expor função para botão
 window.salvarOS = salvarOS;
+carregarClientes();
 </script>
 
 </body>
