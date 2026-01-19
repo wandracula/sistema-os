@@ -23,11 +23,14 @@ body {
   background: #f1f5f9;
 }
 
+/* Sidebar */
 .sidebar {
   width: 240px;
   height: 100vh;
   background: var(--bg-color);
   color: var(--text-color);
+  display: flex;
+  flex-direction: column;
   padding: 20px;
   position: fixed;
 }
@@ -35,68 +38,138 @@ body {
 .sidebar h2 {
   text-align: center;
   margin-bottom: 30px;
+  font-size: 20px;
+  font-weight: bold;
 }
 
 .sidebar a {
   display: block;
-  padding: 12px;
+  padding: 12px 15px;
   margin-bottom: 10px;
   color: var(--text-color);
   text-decoration: none;
   border-radius: 8px;
   font-weight: 600;
+  transition: 0.3s;
 }
 
 .sidebar a:hover { background: var(--hover); }
 
+/* Main content */
 .main {
   margin-left: 240px;
   padding: 30px;
   flex: 1;
 }
 
+/* Card */
 .card {
   background: var(--card-bg);
   padding: 25px;
   border-radius: 14px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.05);
   margin-bottom: 25px;
 }
 
-h3 {
-  margin-top: 0;
-  border-left: 5px solid var(--primary);
-  padding-left: 10px;
-}
+h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
 
-input, select, textarea {
+/* Input */
+input {
   width: 100%;
-  padding: 8px;
-  margin-top: 8px;
-  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 8px;
   border: 1px solid #cbd5e1;
 }
 
-textarea { resize: none; }
-
-button {
-  margin-top: 10px;
-  padding: 10px;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  color: #fff;
+/* Lista */
+.lista {
+  list-style: none;
+  padding: 0;
 }
 
-.btn-primary { background: var(--primary); }
-.btn-primary:hover { background: #1e40af; }
+.lista li {
+  background: var(--card-bg);
+  margin-bottom: 10px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
 
-.btn-danger { background: #64748b; }
-.btn-danger:hover { background: #475569; }
+.lista li:hover { background: var(--hover); color: #fff; }
+
+.descricao {
+  background: #f1f5f9;
+  padding: 15px;
+  margin-top: 10px;
+  border-radius: 8px;
+  display: none;
+}
 </style>
-</head>
 
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+  authDomain: "sistema-os-1284b.firebaseapp.com",
+  projectId: "sistema-os-1284b",
+  storageBucket: "sistema-os-1284b.appspot.com",
+  messagingSenderId: "1032102605721",
+  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const osCollection = collection(db, "os");
+
+let osLista = []; // Armazena todas as OS carregadas
+
+// Carrega OS do Firestore
+async function carregarOS() {
+  const snapshot = await getDocs(osCollection);
+  osLista = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+  renderizarLista(osLista);
+}
+
+// Renderiza a lista filtrada
+function renderizarLista(lista) {
+  const ul = document.getElementById("listaOS");
+  ul.innerHTML = "";
+  lista.forEach(os => {
+    const li = document.createElement("li");
+    li.innerHTML = `<b>${os.cliente}</b> | OS: ${os.osnum} | Status: ${os.status}`;
+    
+    li.addEventListener("click", () => {
+      const descDiv = document.getElementById("descricaoOS");
+      descDiv.innerHTML = `<b>Descrição:</b> ${os.descricao || "Sem descrição"}`;
+      descDiv.style.display = "block";
+    });
+
+    ul.appendChild(li);
+  });
+}
+
+// Pesquisa
+function pesquisar() {
+  const termo = document.getElementById("pesquisa").value.toLowerCase();
+  const filtrados = osLista.filter(os => 
+    os.cliente.toLowerCase().includes(termo) || (os.osnum && os.osnum.toLowerCase().includes(termo))
+  );
+  renderizarLista(filtrados);
+}
+
+// Inicia
+window.addEventListener("DOMContentLoaded", () => {
+  carregarOS();
+  document.getElementById("pesquisa").addEventListener("input", pesquisar);
+});
+</script>
+
+</head>
 <body>
 
 <div class="sidebar">
@@ -111,92 +184,12 @@ button {
 
 <div class="main">
   <div class="card">
-    <h3>Ordens de Serviço</h3>
-    <div id="listaOS"></div>
+    <h3>Pesquisar OS</h3>
+    <input type="text" id="pesquisa" placeholder="Digite o nome do cliente ou número da OS">
+    <ul id="listaOS" class="lista"></ul>
+    <div id="descricaoOS" class="descricao"></div>
   </div>
 </div>
-
-<!-- 🔥 FIREBASE -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  updateDoc,
-  deleteDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
-  authDomain: "sistema-os-1284b.firebaseapp.com",
-  projectId: "sistema-os-1284b",
-  storageBucket: "sistema-os-1284b.appspot.com",
-  messagingSenderId: "1032102605721",
-  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const listaOS = document.getElementById("listaOS");
-
-// LISTAR OS
-async function carregarOS() {
-  listaOS.innerHTML = "";
-  const snapshot = await getDocs(collection(db, "os"));
-
-  snapshot.forEach(docSnap => {
-    const o = docSnap.data();
-    const id = docSnap.id;
-
-    listaOS.innerHTML += `
-      <div class="card">
-        <b>OS:</b><input id="osnum-${id}" value="${o.osnum}">
-        <b>Cliente:</b><input id="cliente-${id}" value="${o.cliente}">
-        <b>Telefone:</b><input id="telefone-${id}" value="${o.telefone}">
-        <b>Endereço:</b><input id="endereco-${id}" value="${o.endereco}">
-        <b>Status:</b>
-        <select id="status-${id}">
-          <option ${o.status=="Pendente"?'selected':''}>Pendente</option>
-          <option ${o.status=="Em bancada"?'selected':''}>Em bancada</option>
-          <option ${o.status=="Orçamento pronto"?'selected':''}>Orçamento pronto</option>
-          <option ${o.status=="Concluído"?'selected':''}>Concluído</option>
-        </select>
-        <b>Descrição:</b><textarea id="desc-${id}">${o.descricao}</textarea>
-        <b>Valor:</b><input type="number" id="valor-${id}" value="${o.valor}">
-        <button class="btn-primary" onclick="atualizarOS('${id}')">Atualizar</button>
-        <button class="btn-danger" onclick="excluirOS('${id}')">Excluir</button>
-      </div>
-    `;
-  });
-}
-
-// ATUALIZAR
-window.atualizarOS = async function(id) {
-  await updateDoc(doc(db, "os", id), {
-    osnum: document.getElementById(`osnum-${id}`).value,
-    cliente: document.getElementById(`cliente-${id}`).value,
-    telefone: document.getElementById(`telefone-${id}`).value,
-    endereco: document.getElementById(`endereco-${id}`).value,
-    status: document.getElementById(`status-${id}`).value,
-    descricao: document.getElementById(`desc-${id}`).value,
-    valor: document.getElementById(`valor-${id}`).value
-  });
-  alert("OS atualizada com sucesso!");
-};
-
-// EXCLUIR
-window.excluirOS = async function(id) {
-  if (confirm("Deseja excluir esta OS?")) {
-    await deleteDoc(doc(db, "os", id));
-    carregarOS();
-  }
-};
-
-carregarOS();
-</script>
 
 </body>
 </html>
