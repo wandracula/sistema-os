@@ -23,14 +23,11 @@ body {
   background: #f1f5f9;
 }
 
-/* Sidebar */
 .sidebar {
   width: 240px;
   height: 100vh;
   background: var(--bg-color);
   color: var(--text-color);
-  display: flex;
-  flex-direction: column;
   padding: 20px;
   position: fixed;
 }
@@ -38,38 +35,31 @@ body {
 .sidebar h2 {
   text-align: center;
   margin-bottom: 30px;
-  font-size: 20px;
-  font-weight: bold;
 }
 
 .sidebar a {
   display: block;
-  padding: 12px 15px;
+  padding: 12px;
   margin-bottom: 10px;
   color: var(--text-color);
   text-decoration: none;
   border-radius: 8px;
   font-weight: 600;
-  transition: 0.3s;
 }
 
-.sidebar a:hover {
-  background: var(--hover);
-}
+.sidebar a:hover { background: var(--hover); }
 
-/* Main content */
 .main {
   margin-left: 240px;
   padding: 30px;
   flex: 1;
 }
 
-/* Cards */
 .card {
   background: var(--card-bg);
   padding: 25px;
   border-radius: 14px;
-  box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
   margin-bottom: 25px;
 }
 
@@ -79,12 +69,11 @@ h3 {
   padding-left: 10px;
 }
 
-/* Form */
 input, select, textarea {
   width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
+  padding: 8px;
+  margin-top: 8px;
+  border-radius: 6px;
   border: 1px solid #cbd5e1;
 }
 
@@ -92,26 +81,24 @@ textarea { resize: none; }
 
 button {
   margin-top: 10px;
-  padding: 10px 15px;
+  padding: 10px;
   border: none;
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
   color: #fff;
-  transition: 0.3s;
 }
 
 .btn-primary { background: var(--primary); }
 .btn-primary:hover { background: #1e40af; }
 
-.btn-danger { background: var(--secondary); }
-.btn-danger:hover { background: var(--primary); }
+.btn-danger { background: #64748b; }
+.btn-danger:hover { background: #475569; }
 </style>
 </head>
 
 <body>
 
-<!-- Sidebar -->
 <div class="sidebar">
   <h2>🛠 Sistema OS</h2>
   <a href="index.html">Entrada de Equipamento</a>
@@ -122,70 +109,93 @@ button {
   <a href="backup.html">Backup / Restaurar</a>
 </div>
 
-<!-- Main -->
 <div class="main">
   <div class="card">
-    <h3>Ordens de Serviço Cadastradas</h3>
+    <h3>Ordens de Serviço</h3>
     <div id="listaOS"></div>
   </div>
 </div>
 
-<script>
-let listaOS = JSON.parse(localStorage.getItem("os")) || [];
+<!-- 🔥 FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-function listarOS() {
-  let div = document.getElementById("listaOS");
-  div.innerHTML = "";
-  listaOS.forEach((o, i) => {
-    let card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <b>OS:</b> <input value="${o.osnum}" id="osnum-${i}">
-      <b>Cliente:</b> <input value="${o.cliente}" id="cliente-${i}">
-      <b>Telefone:</b> <input value="${o.telefone}" id="telefone-${i}">
-      <b>Endereço:</b> <input value="${o.endereco}" id="endereco-${i}">
-      <b>Status:</b>
-      <select id="status-${i}">
-        <option ${o.status=="Pendente"?'selected':''}>Pendente</option>
-        <option ${o.status=="Em bancada"?'selected':''}>Em bancada</option>
-        <option ${o.status=="Orçamento pronto"?'selected':''}>Orçamento pronto</option>
-        <option ${o.status=="Concluído"?'selected':''}>Concluído</option>
-      </select>
-      <b>Descrição:</b> <textarea id="desc-${i}">${o.descricao}</textarea>
-      <b>Valor:</b> <input type="number" id="valor-${i}" value="${o.valor}">
-      <br>
-      <button class="btn-primary" onclick="atualizar(${i})">Atualizar</button>
-      <button class="btn-danger" onclick="deletar(${i})">Excluir</button>
+const firebaseConfig = {
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+  authDomain: "sistema-os-1284b.firebaseapp.com",
+  projectId: "sistema-os-1284b",
+  storageBucket: "sistema-os-1284b.appspot.com",
+  messagingSenderId: "1032102605721",
+  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const listaOS = document.getElementById("listaOS");
+
+// LISTAR OS
+async function carregarOS() {
+  listaOS.innerHTML = "";
+  const snapshot = await getDocs(collection(db, "os"));
+
+  snapshot.forEach(docSnap => {
+    const o = docSnap.data();
+    const id = docSnap.id;
+
+    listaOS.innerHTML += `
+      <div class="card">
+        <b>OS:</b><input id="osnum-${id}" value="${o.osnum}">
+        <b>Cliente:</b><input id="cliente-${id}" value="${o.cliente}">
+        <b>Telefone:</b><input id="telefone-${id}" value="${o.telefone}">
+        <b>Endereço:</b><input id="endereco-${id}" value="${o.endereco}">
+        <b>Status:</b>
+        <select id="status-${id}">
+          <option ${o.status=="Pendente"?'selected':''}>Pendente</option>
+          <option ${o.status=="Em bancada"?'selected':''}>Em bancada</option>
+          <option ${o.status=="Orçamento pronto"?'selected':''}>Orçamento pronto</option>
+          <option ${o.status=="Concluído"?'selected':''}>Concluído</option>
+        </select>
+        <b>Descrição:</b><textarea id="desc-${id}">${o.descricao}</textarea>
+        <b>Valor:</b><input type="number" id="valor-${id}" value="${o.valor}">
+        <button class="btn-primary" onclick="atualizarOS('${id}')">Atualizar</button>
+        <button class="btn-danger" onclick="excluirOS('${id}')">Excluir</button>
+      </div>
     `;
-    div.appendChild(card);
   });
 }
 
-function atualizar(i) {
-  listaOS[i] = {
-    osnum: document.getElementById(`osnum-${i}`).value,
-    cliente: document.getElementById(`cliente-${i}`).value,
-    telefone: document.getElementById(`telefone-${i}`).value,
-    endereco: document.getElementById(`endereco-${i}`).value,
-    status: document.getElementById(`status-${i}`).value,
-    descricao: document.getElementById(`desc-${i}`).value,
-    valor: document.getElementById(`valor-${i}`).value
-  };
-  localStorage.setItem("os", JSON.stringify(listaOS));
-  alert("OS atualizada!");
-  listarOS();
-}
+// ATUALIZAR
+window.atualizarOS = async function(id) {
+  await updateDoc(doc(db, "os", id), {
+    osnum: document.getElementById(`osnum-${id}`).value,
+    cliente: document.getElementById(`cliente-${id}`).value,
+    telefone: document.getElementById(`telefone-${id}`).value,
+    endereco: document.getElementById(`endereco-${id}`).value,
+    status: document.getElementById(`status-${id}`).value,
+    descricao: document.getElementById(`desc-${id}`).value,
+    valor: document.getElementById(`valor-${id}`).value
+  });
+  alert("OS atualizada com sucesso!");
+};
 
-function deletar(i) {
-  if(confirm("Deseja realmente excluir esta OS?")){
-    listaOS.splice(i,1);
-    localStorage.setItem("os", JSON.stringify(listaOS));
-    listarOS();
+// EXCLUIR
+window.excluirOS = async function(id) {
+  if (confirm("Deseja excluir esta OS?")) {
+    await deleteDoc(doc(db, "os", id));
+    carregarOS();
   }
-}
+};
 
-// Listar ao carregar
-listarOS();
+carregarOS();
 </script>
 
 </body>
