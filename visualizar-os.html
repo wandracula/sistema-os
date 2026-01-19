@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Visualizar OS</title>
-
 <style>
 :root {
   --bg-color: #0f172a;
@@ -23,7 +22,6 @@ body {
   background: #f1f5f9;
 }
 
-/* Sidebar */
 .sidebar {
   width: 240px;
   height: 100vh;
@@ -35,140 +33,30 @@ body {
   position: fixed;
 }
 
-.sidebar h2 {
-  text-align: center;
-  margin-bottom: 30px;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.sidebar a {
-  display: block;
-  padding: 12px 15px;
-  margin-bottom: 10px;
-  color: var(--text-color);
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: 0.3s;
-}
-
+.sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
+.sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: var(--text-color); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
 .sidebar a:hover { background: var(--hover); }
 
-/* Main content */
-.main {
-  margin-left: 240px;
-  padding: 30px;
-  flex: 1;
-}
+.main { margin-left: 240px; padding: 30px; flex: 1; }
 
-/* Card */
-.card {
-  background: var(--card-bg);
-  padding: 25px;
-  border-radius: 14px;
-  box-shadow: 0 15px 30px rgba(0,0,0,0.05);
-  margin-bottom: 25px;
-}
-
+.card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
 h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
 
-/* Input */
-input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
+input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cbd5e1; }
+
+.lista { margin-top: 10px; }
+.lista .item {
+  background: #f9fafb;
+  padding: 12px;
   border-radius: 8px;
-  border: 1px solid #cbd5e1;
-}
-
-/* Lista */
-.lista {
-  list-style: none;
-  padding: 0;
-}
-
-.lista li {
-  background: var(--card-bg);
   margin-bottom: 10px;
-  padding: 12px 15px;
-  border-radius: 8px;
   cursor: pointer;
-  transition: 0.3s;
+  display: flex;
+  justify-content: space-between;
 }
-
-.lista li:hover { background: var(--hover); color: #fff; }
-
-.descricao {
-  background: #f1f5f9;
-  padding: 15px;
-  margin-top: 10px;
-  border-radius: 8px;
-  display: none;
-}
+.lista .item span { display: block; }
+.lista .item:hover { background: #e2e8f0; }
 </style>
-
-<!-- Firebase -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
-  authDomain: "sistema-os-1284b.firebaseapp.com",
-  projectId: "sistema-os-1284b",
-  storageBucket: "sistema-os-1284b.appspot.com",
-  messagingSenderId: "1032102605721",
-  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const osCollection = collection(db, "os");
-
-let osLista = []; // Armazena todas as OS carregadas
-
-// Carrega OS do Firestore
-async function carregarOS() {
-  const snapshot = await getDocs(osCollection);
-  osLista = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-  renderizarLista(osLista);
-}
-
-// Renderiza a lista filtrada
-function renderizarLista(lista) {
-  const ul = document.getElementById("listaOS");
-  ul.innerHTML = "";
-  lista.forEach(os => {
-    const li = document.createElement("li");
-    li.innerHTML = `<b>${os.cliente}</b> | OS: ${os.osnum} | Status: ${os.status}`;
-    
-    li.addEventListener("click", () => {
-      const descDiv = document.getElementById("descricaoOS");
-      descDiv.innerHTML = `<b>Descrição:</b> ${os.descricao || "Sem descrição"}`;
-      descDiv.style.display = "block";
-    });
-
-    ul.appendChild(li);
-  });
-}
-
-// Pesquisa
-function pesquisar() {
-  const termo = document.getElementById("pesquisa").value.toLowerCase();
-  const filtrados = osLista.filter(os => 
-    os.cliente.toLowerCase().includes(termo) || (os.osnum && os.osnum.toLowerCase().includes(termo))
-  );
-  renderizarLista(filtrados);
-}
-
-// Inicia
-window.addEventListener("DOMContentLoaded", () => {
-  carregarOS();
-  document.getElementById("pesquisa").addEventListener("input", pesquisar);
-});
-</script>
-
 </head>
 <body>
 
@@ -185,11 +73,73 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class="main">
   <div class="card">
     <h3>Pesquisar OS</h3>
-    <input type="text" id="pesquisa" placeholder="Digite o nome do cliente ou número da OS">
-    <ul id="listaOS" class="lista"></ul>
-    <div id="descricaoOS" class="descricao"></div>
+    <input type="text" id="busca" placeholder="Digite nome do cliente ou número da OS">
+    <div class="lista" id="listaOS"></div>
   </div>
 </div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+  authDomain: "sistema-os-1284b.firebaseapp.com",
+  projectId: "sistema-os-1284b",
+  storageBucket: "sistema-os-1284b.appspot.com",
+  messagingSenderId: "1032102605721",
+  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let osData = [];
+
+// Buscar todas as OS
+async function carregarOS() {
+  const osSnap = await getDocs(collection(db, "ordens_servico"));
+  osData = [];
+  osSnap.forEach(doc => osData.push({ id: doc.id, ...doc.data() }));
+  exibirLista();
+}
+
+// Exibir lista resumida
+function exibirLista(filter="") {
+  const listaDiv = document.getElementById("listaOS");
+  listaDiv.innerHTML = "";
+
+  let filtrados = osData.filter(o => 
+    o.cliente.toLowerCase().includes(filter.toLowerCase()) ||
+    o.osnum.toString().includes(filter)
+  );
+
+  filtrados.forEach(o => {
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <span><b>${o.cliente}</b></span>
+      <span>OS: ${o.osnum}</span>
+      <span>Status: ${o.status}</span>
+    `;
+
+    div.onclick = () => {
+      alert(`OS: ${o.osnum}\nCliente: ${o.cliente}\nTelefone: ${o.telefone}\nEndereço: ${o.endereco}\nStatus: ${o.status}\nValor: R$${o.valor}\nDescrição:\n${o.descricao}`);
+    };
+
+    listaDiv.appendChild(div);
+  });
+}
+
+// Filtrar enquanto digita
+document.getElementById("busca").addEventListener("input", e => {
+  exibirLista(e.target.value);
+});
+
+// Inicializar
+carregarOS();
+</script>
 
 </body>
 </html>
