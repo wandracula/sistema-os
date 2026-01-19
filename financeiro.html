@@ -24,6 +24,9 @@ h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
 table { width: 100%; border-collapse: collapse; margin-top: 15px; }
 table, th, td { border: 1px solid #cbd5e1; }
 th, td { padding: 10px; text-align: left; }
+#total { margin-top: 15px; font-weight: bold; font-size: 18px; }
+button { margin-top: 15px; padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; }
+button:hover { background: #1e40af; }
 @media(max-width: 768px){ .sidebar { width: 200px; } .main { margin-left: 200px; padding: 20px; } }
 </style>
 </head>
@@ -48,6 +51,7 @@ th, td { padding: 10px; text-align: left; }
         <tr>
           <th>OS Número</th>
           <th>Cliente</th>
+          <th>Descrição</th>
           <th>Valor (R$)</th>
           <th>Status</th>
         </tr>
@@ -56,12 +60,15 @@ th, td { padding: 10px; text-align: left; }
         <!-- Dados serão carregados aqui -->
       </tbody>
     </table>
+    <div id="total">Total: R$ 0,00</div>
+    <button id="gerarPDF">Gerar Relatório em PDF</button>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import jsPDF from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
 
 // Config Firebase
 const firebaseConfig = {
@@ -77,32 +84,68 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+let osList = [];
+
 // Carregar OS do Firestore
 async function carregarFinanceiro() {
   const tabela = document.getElementById("tabela-financeiro");
   tabela.innerHTML = "";
+  osList = [];
+  let total = 0;
 
   try {
     const querySnapshot = await getDocs(collection(db, "os"));
     querySnapshot.forEach(doc => {
       const os = doc.data();
+      // Garantindo que valor seja numérico
+      const valor = parseFloat(os.valor) || 0;
+      total += valor;
+      osList.push({ ...os, valor });
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${os.osnum}</td>
         <td>${os.cliente}</td>
-        <td>${os.valor}</td>
+        <td>${os.descricao || 'Serviço Padrão'}</td>
+        <td>R$ ${valor.toFixed(2)}</td>
         <td>${os.status}</td>
       `;
       tabela.appendChild(tr);
     });
+    document.getElementById("total").textContent = `Total: R$ ${total.toFixed(2)}`;
   } catch (e) {
     alert("Erro ao carregar financeiro: " + e.message);
   }
 }
 
+// Gerar PDF
+document.getElementById("gerarPDF").addEventListener("click", () => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFontSize(16);
+  doc.text("Relatório Financeiro", 14, 20);
+
+  let y = 30;
+  doc.setFontSize(12);
+  osList.forEach(os => {
+    doc.text(`OS: ${os.osnum}`, 14, y);
+    doc.text(`Cliente: ${os.cliente}`, 14, y + 6);
+    doc.text(`Descrição: ${os.descricao || 'Serviço Padrão'}`, 14, y + 12);
+    doc.text(`Valor: R$ ${os.valor.toFixed(2)}`, 14, y + 18);
+    doc.text(`Status: ${os.status}`, 14, y + 24);
+    y += 36;
+    if (y > 270) { doc.addPage(); y = 20; }
+  });
+  const total = osList.reduce((sum, o) => sum + o.valor, 0);
+  doc.text(`Total Geral: R$ ${total.toFixed(2)}`, 14, y + 10);
+
+  doc.save("relatorio-financeiro.pdf");
+});
+
 // Executa ao carregar
 carregarFinanceiro();
 </script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
