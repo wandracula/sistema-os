@@ -48,7 +48,6 @@ textarea { resize: none; }
 button { margin-top: 15px; padding: 12px 18px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #fff; transition: 0.3s; }
 .btn-primary { background: var(--primary); }
 .btn-primary:hover { background: #1e40af; }
-
 </style>
 </head>
 <body>
@@ -88,70 +87,100 @@ button { margin-top: 15px; padding: 12px 18px; border: none; border-radius: 8px;
   </div>
 </div>
 
-<script>
-// Carrega clientes existentes no dropdown
-function carregarClientes() {
-  let clientes = JSON.parse(localStorage.getItem("os")) || [];
-  let clientesUnicos = {};
-  clientes.forEach(os => {
-    if(os.cliente) clientesUnicos[os.cliente] = os.telefone;
-  });
+<!-- Firebase SDK e integração -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-firestore.js";
 
-  const select = document.getElementById("clienteSelect");
-  select.innerHTML = '<option value="">--Selecione--</option>';
-  Object.keys(clientesUnicos).forEach(nome => {
-    let option = document.createElement("option");
-    option.value = nome;
-    option.textContent = nome;
-    select.appendChild(option);
-  });
-}
-
-// Função para gerar próximo número de OS
-function gerarOS() {
-  let lista = JSON.parse(localStorage.getItem("os")) || [];
-  if(lista.length === 0) return 1000;
-  let numeros = lista.map(o => parseInt(o.osnum));
-  return Math.max(...numeros) + 1;
-}
-
-function salvarOS() {
-  let clienteNome = document.getElementById("clienteSelect").value || document.getElementById("novoCliente").value.trim();
-  if(!clienteNome) { alert("Informe o cliente."); return; }
-
-  let telefone = document.getElementById("telefone").value;
-  let endereco = document.getElementById("endereco").value;
-
-  let os = {
-    osnum: gerarOS(),
-    cliente: clienteNome,
-    telefone,
-    endereco,
-    status: document.getElementById("status").value,
-    descricao: document.getElementById("descricao").value,
-    valor: document.getElementById("valor").value
+  // Config do Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+    authDomain: "sistema-os-1284b.firebaseapp.com",
+    projectId: "sistema-os-1284b",
+    storageBucket: "sistema-os-1284b.firebasestorage.app",
+    messagingSenderId: "1032102605721",
+    appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
   };
 
-  let lista = JSON.parse(localStorage.getItem("os")) || [];
-  lista.push(os);
-  localStorage.setItem("os", JSON.stringify(lista));
+  // Inicializa Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const osCollection = collection(db, "os");
 
-  alert("OS salva com sucesso!");
+  // Carregar clientes existentes
+  async function carregarClientes() {
+    const snapshot = await getDocs(osCollection);
+    let clientesUnicos = {};
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if(data.cliente) clientesUnicos[data.cliente] = data.telefone;
+    });
 
-  // Limpar formulário
-  document.getElementById("novoCliente").value = "";
-  document.getElementById("telefone").value = "";
-  document.getElementById("endereco").value = "";
-  document.getElementById("descricao").value = "";
-  document.getElementById("valor").value = "";
-  document.getElementById("status").value = "Pendente";
-  document.getElementById("clienteSelect").value = "";
+    const select = document.getElementById("clienteSelect");
+    select.innerHTML = '<option value="">--Selecione--</option>';
+    Object.keys(clientesUnicos).forEach(nome => {
+      let option = document.createElement("option");
+      option.value = nome;
+      option.textContent = nome;
+      select.appendChild(option);
+    });
+  }
 
+  // Gerar próximo número de OS
+  async function gerarOS() {
+    const snapshot = await getDocs(osCollection);
+    if(snapshot.empty) return 1000;
+    const numeros = snapshot.docs.map(doc => parseInt(doc.data().osnum));
+    return Math.max(...numeros) + 1;
+  }
+
+  // Salvar OS no Firestore
+  async function salvarOS() {
+    let clienteNome = document.getElementById("clienteSelect").value || document.getElementById("novoCliente").value.trim();
+    if(!clienteNome) { alert("Informe o cliente."); return; }
+
+    let telefone = document.getElementById("telefone").value;
+    let endereco = document.getElementById("endereco").value;
+    let status = document.getElementById("status").value;
+    let descricao = document.getElementById("descricao").value;
+    let valor = document.getElementById("valor").value;
+
+    let osnum = await gerarOS();
+
+    try {
+      await addDoc(osCollection, {
+        osnum,
+        cliente: clienteNome,
+        telefone,
+        endereco,
+        status,
+        descricao,
+        valor
+      });
+
+      alert("OS salva com sucesso!");
+
+      // Limpar formulário
+      document.getElementById("novoCliente").value = "";
+      document.getElementById("telefone").value = "";
+      document.getElementById("endereco").value = "";
+      document.getElementById("descricao").value = "";
+      document.getElementById("valor").value = "";
+      document.getElementById("status").value = "Pendente";
+      document.getElementById("clienteSelect").value = "";
+
+      carregarClientes();
+    } catch (e) {
+      console.error("Erro ao salvar OS: ", e);
+      alert("Erro ao salvar OS. Veja o console.");
+    }
+  }
+
+  // Inicializa clientes
   carregarClientes();
-}
 
-// Inicializa clientes
-carregarClientes();
+  // Expõe função para o botão
+  window.salvarOS = salvarOS;
 </script>
 
 </body>
