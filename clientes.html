@@ -13,22 +13,117 @@
   --text-color: #f1f5f9;
   --hover: #334155;
 }
+
 * { box-sizing: border-box; }
-body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; display: flex; background: #f1f5f9; }
-.sidebar { width: 240px; height: 100vh; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; padding: 20px; position: fixed; }
-.sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold; }
-.sidebar a { display: block; padding: 12px 15px; margin-bottom: 10px; color: var(--text-color); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; }
-.sidebar a:hover { background: var(--hover); }
-.main { margin-left: 240px; padding: 30px; flex: 1; }
-.card { background: var(--card-bg); padding: 25px; border-radius: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
-h3 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
-input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
-button { margin-top: 15px; padding: 12px 18px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #fff; background: var(--primary); }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  display: flex;
+  background: #f1f5f9;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: fixed;
+}
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.sidebar a {
+  display: block;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  color: var(--text-color);
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.sidebar a:hover {
+  background: var(--hover);
+}
+
+/* Main content */
+.main {
+  margin-left: 240px;
+  padding: 30px;
+  flex: 1;
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+  margin-bottom: 25px;
+}
+
+h3 {
+  margin-top: 0;
+  border-left: 5px solid var(--primary);
+  padding-left: 10px;
+}
+
+/* Form */
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
+
+button {
+  margin-top: 15px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
+  background: var(--primary);
+}
 button:hover { background: #1e40af; }
-.lista { margin-top: 20px; }
-.lista .cliente { background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-.lista .cliente span { display: block; }
-.lista .cliente button { background: var(--secondary); margin: 0; }
+
+/* Lista de clientes */
+.lista {
+  margin-top: 20px;
+}
+
+.lista .cliente {
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.lista .cliente span {
+  display: block;
+}
+
+.lista .cliente button {
+  background: var(--secondary);
+  margin: 0;
+}
 .lista .cliente button:hover { background: var(--primary); color: #fff; }
 </style>
 </head>
@@ -50,7 +145,6 @@ button:hover { background: #1e40af; }
     <h3>Cadastro de Cliente</h3>
     <input id="nome" placeholder="Nome do Cliente">
     <input id="telefone" placeholder="Telefone (WhatsApp)">
-    <input id="endereco" placeholder="Endereço">
     <button onclick="salvarCliente()">Salvar Cliente</button>
   </div>
 
@@ -60,11 +154,11 @@ button:hover { background: #1e40af; }
   </div>
 </div>
 
+<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
   authDomain: "sistema-os-1284b.firebaseapp.com",
@@ -74,60 +168,63 @@ const firebaseConfig = {
   appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
 };
 
-// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Salvar cliente
+// Salvar cliente no Firestore
 async function salvarCliente() {
   const nome = document.getElementById("nome").value;
   const telefone = document.getElementById("telefone").value;
-  const endereco = document.getElementById("endereco").value;
 
-  if(!nome) { alert("Digite o nome do cliente!"); return; }
+  if(!nome || !telefone) {
+    alert("Preencha nome e telefone do cliente!");
+    return;
+  }
 
   try {
-    await addDoc(collection(db, "clientes"), { nome, telefone, endereco });
+    await addDoc(collection(db, "clientes"), { nome, telefone });
     document.getElementById("nome").value = "";
     document.getElementById("telefone").value = "";
-    document.getElementById("endereco").value = "";
     listarClientes();
   } catch(e) {
-    alert("Erro ao salvar cliente: " + e.message);
+    console.error("Erro ao salvar cliente:", e);
   }
 }
 
-// Listar clientes
+// Listar clientes e exibir OS relacionadas
 async function listarClientes() {
-  const lista = document.getElementById("listaClientes");
-  lista.innerHTML = "";
+  const listaDiv = document.getElementById("listaClientes");
+  listaDiv.innerHTML = "";
 
-  try {
-    const querySnapshot = await getDocs(collection(db, "clientes"));
-    querySnapshot.forEach(docSnap => {
-      const c = docSnap.data();
-      const div = document.createElement("div");
-      div.className = "cliente";
-      div.innerHTML = `
-        <span><b>${c.nome}</b><br>${c.telefone}<br>${c.endereco}</span>
-        <button onclick="deletarCliente('${docSnap.id}')">Excluir</button>
-      `;
-      lista.appendChild(div);
-    });
-  } catch(e) {
-    alert("Erro ao carregar clientes: " + e.message);
+  const clientesSnap = await getDocs(collection(db, "clientes"));
+  const clientes = [];
+  clientesSnap.forEach(doc => clientes.push({ id: doc.id, ...doc.data() }));
+
+  for(const c of clientes) {
+    const div = document.createElement("div");
+    div.className = "cliente";
+    div.innerHTML = `<span><b>${c.nome}</b><br>${c.telefone}</span>`;
+    
+    div.onclick = async () => {
+      // Buscar OS do cliente
+      const osSnap = await getDocs(query(collection(db, "ordens_servico"), where("cliente", "==", c.nome)));
+      if(osSnap.empty){
+        alert("Nenhuma OS encontrada para este cliente.");
+      } else {
+        let msg = "";
+        osSnap.forEach(doc => {
+          const o = doc.data();
+          msg += `OS: ${o.osnum}\nStatus: ${o.status}\nValor: R$${o.valor}\nDescrição: ${o.descricao}\n\n`;
+        });
+        alert(msg);
+      }
+    };
+
+    listaDiv.appendChild(div);
   }
 }
 
-// Deletar cliente
-async function deletarCliente(id) {
-  if(confirm("Deseja realmente excluir este cliente?")) {
-    await deleteDoc(doc(db, "clientes", id));
-    listarClientes();
-  }
-}
-
-// Inicializa a lista
+// Inicializar lista ao carregar
 listarClientes();
 </script>
 
