@@ -10,24 +10,29 @@ body { margin: 0; font-family: Arial; display: flex; background: #f1f5f9; }
   width: 240px; background: #0f172a; color: #fff;
   padding: 20px; height: 100vh; position: fixed;
 }
-.sidebar a {
-  color: #fff; text-decoration: none;
-  display: block; padding: 10px;
-  border-radius: 6px;
-}
-.sidebar a:hover { background: #334155; }
+.sidebar a { color: #fff; text-decoration: none; display: block; padding: 10px; }
+.sidebar a:hover { background: #334155; border-radius: 6px; }
 
 .main { margin-left: 240px; padding: 30px; width: 100%; }
 
 .card {
   background: #fff; padding: 20px;
   border-radius: 12px; margin-bottom: 20px;
-  box-shadow: 0 5px 20px rgba(0,0,0,.1);
 }
 
-.resumo {
-  display: flex; gap: 20px;
+.filtro { display: flex; gap: 10px; margin-bottom: 15px; }
+input, select {
+  padding: 8px; border-radius: 6px; border: 1px solid #ccc;
 }
+
+button {
+  background: #2563eb; color: #fff;
+  border: none; padding: 8px 14px;
+  border-radius: 6px; cursor: pointer;
+}
+button:hover { background: #1e40af; }
+
+.resumo { display: flex; gap: 20px; }
 .box {
   flex: 1; padding: 20px;
   border-radius: 12px; color: #fff;
@@ -35,8 +40,17 @@ body { margin: 0; font-family: Arial; display: flex; background: #f1f5f9; }
 .recebido { background: #16a34a; }
 .receber { background: #ca8a04; }
 
-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-th, td { border: 1px solid #ccc; padding: 8px; }
+.cliente {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 15px;
+  padding: 15px;
+}
+
+.cliente h3 { margin-top: 0; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #ccc; padding: 6px; font-size: 14px; }
 th { background: #f1f5f9; }
 </style>
 </head>
@@ -53,37 +67,35 @@ th { background: #f1f5f9; }
 
 <div class="main">
 
-  <!-- RESUMO -->
+  <!-- FILTRO -->
+  <div class="card filtro">
+    <input type="date" id="dataInicio">
+    <input type="date" id="dataFim">
+    <button onclick="aplicarFiltro()">Filtrar</button>
+    <button onclick="gerarPDF()">Gerar PDF</button>
+  </div>
+
+  <!-- RESUMO GERAL -->
   <div class="card resumo">
     <div class="box recebido">
       <h3>Total Recebido</h3>
       <h1 id="totalRecebido">R$ 0,00</h1>
     </div>
-
     <div class="box receber">
       <h3>Total a Receber</h3>
       <h1 id="totalReceber">R$ 0,00</h1>
     </div>
   </div>
 
-  <!-- TABELA FINANCEIRA -->
+  <!-- RELATÓRIO POR CLIENTE -->
   <div class="card">
-    <h2>Detalhamento Financeiro</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>OS</th>
-          <th>Cliente</th>
-          <th>Status</th>
-          <th>Valor (R$)</th>
-          <th>Situação</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaFinanceiro"></tbody>
-    </table>
+    <h2>Relatório por Cliente</h2>
+    <div id="relatorioClientes"></div>
   </div>
 
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -102,45 +114,129 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const osCollection = collection(db, "os");
 
-async function carregarFinanceiro() {
+let todasOS = [];
+
+async function carregar() {
+  todasOS = [];
+  const snap = await getDocs(osCollection);
+  snap.forEach(d => {
+    const os = d.data();
+    os.data = os.data?.seconds
+      ? new Date(os.data.seconds * 1000)
+      : new Date();
+    todasOS.push(os);
+  });
+  render(todasOS);
+}
+
+function render(lista) {
   let totalRecebido = 0;
   let totalReceber = 0;
+  const clientes = {};
 
-  const tbody = document.getElementById("tabelaFinanceiro");
-  tbody.innerHTML = "";
-
-  const snap = await getDocs(osCollection);
-  snap.forEach(docSnap => {
-    const os = docSnap.data();
+  lista.forEach(os => {
     const valor = Number(os.valor) || 150;
+    if(!clientes[os.cliente]) {
+      clientes[os.cliente] = {
+        recebido: 0,
+        receber: 0,
+        ordens: []
+      };
+    }
 
-    let situacao = "A receber";
-
-    if(os.status === "Concluído" || os.financeiroStatus === "recebido") {
+    if(os.status === "Concluído") {
+      clientes[os.cliente].recebido += valor;
       totalRecebido += valor;
-      situacao = "Recebido";
     } else {
+      clientes[os.cliente].receber += valor;
       totalReceber += valor;
     }
 
-    tbody.innerHTML += `
-      <tr>
-        <td>${os.osnum}</td>
-        <td>${os.cliente}</td>
-        <td>${os.status}</td>
-        <td>R$ ${valor.toFixed(2)}</td>
-        <td>${situacao}</td>
-      </tr>
-    `;
+    clientes[os.cliente].ordens.push({ ...os, valor });
   });
 
   document.getElementById("totalRecebido").innerText =
     `R$ ${totalRecebido.toFixed(2)}`;
   document.getElementById("totalReceber").innerText =
     `R$ ${totalReceber.toFixed(2)}`;
+
+  const container = document.getElementById("relatorioClientes");
+  container.innerHTML = "";
+
+  Object.keys(clientes).forEach(nome => {
+    const c = clientes[nome];
+    container.innerHTML += `
+      <div class="cliente">
+        <h3>${nome}</h3>
+        <p><b>Recebido:</b> R$ ${c.recebido.toFixed(2)} |
+           <b>A receber:</b> R$ ${c.receber.toFixed(2)}</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>OS</th>
+              <th>Status</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${c.ordens.map(o => `
+              <tr>
+                <td>${o.data.toLocaleDateString()}</td>
+                <td>${o.osnum}</td>
+                <td>${o.status}</td>
+                <td>R$ ${o.valor.toFixed(2)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+  });
 }
 
-carregarFinanceiro();
+function aplicarFiltro() {
+  const i = document.getElementById("dataInicio").value;
+  const f = document.getElementById("dataFim").value;
+  if(!i || !f) return alert("Selecione o período");
+
+  const di = new Date(i);
+  const df = new Date(f + "T23:59:59");
+
+  render(todasOS.filter(o => o.data >= di && o.data <= df));
+}
+
+function gerarPDF() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+  let y = 15;
+
+  pdf.setFontSize(16);
+  pdf.text("RELATÓRIO FINANCEIRO POR CLIENTE", 14, y);
+  y += 8;
+
+  pdf.setFontSize(10);
+  pdf.text(`Emitido em: ${new Date().toLocaleDateString()}`, 14, y);
+  y += 10;
+
+  document.querySelectorAll(".cliente").forEach(div => {
+    const linhas = div.innerText.split("\n");
+    linhas.forEach(l => {
+      if(y > 280) { pdf.addPage(); y = 15; }
+      pdf.text(l, 14, y);
+      y += 6;
+    });
+    y += 6;
+  });
+
+  pdf.save("relatorio-financeiro-clientes.pdf");
+}
+
+window.aplicarFiltro = aplicarFiltro;
+window.gerarPDF = gerarPDF;
+
+carregar();
 </script>
 
 </body>
