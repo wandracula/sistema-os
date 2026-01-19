@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Sistema OS - Produtos e Serviços</title>
+
 <style>
 :root {
   --bg-color: #f1f5f9;
@@ -14,11 +15,11 @@
   --button-hover: #1e40af;
 }
 
-body { 
-  margin: 0; 
-  font-family: "Segoe UI", Arial, sans-serif; 
-  background: var(--bg-color); 
-  color: var(--text-color); 
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-color);
 }
 
 .sidebar {
@@ -32,112 +33,101 @@ body {
   position: fixed;
 }
 
-.sidebar h2 { 
-  text-align: center; 
-  margin-bottom: 30px; 
-  font-size: 20px; 
-  font-weight: bold; 
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 30px;
 }
 
-.sidebar a { 
-  display: block; 
-  padding: 12px 15px; 
-  margin-bottom: 10px; 
-  color: #f1f5f9; 
-  text-decoration: none; 
-  border-radius: 8px; 
-  font-weight: 600; 
-  transition: 0.3s; 
+.sidebar a {
+  padding: 12px;
+  margin-bottom: 10px;
+  color: #f1f5f9;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 .sidebar a:hover { background: #334155; }
 
-.main { margin-left: 240px; padding: 30px; flex: 1; }
-
-.card { 
-  background: var(--card-bg); 
-  padding: 25px; 
-  border-radius: 14px; 
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
-  margin-bottom: 25px; 
+.main {
+  margin-left: 240px;
+  padding: 30px;
 }
 
-h3 { 
-  margin-top: 0; 
-  border-left: 5px solid var(--primary); 
-  padding-left: 10px; 
+.card {
+  background: var(--card-bg);
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 10px 20px rgba(0,0,0,.1);
 }
 
-input, button, select, textarea { 
-  width: 100%; 
-  padding: 10px; 
-  margin-top: 10px; 
-  border-radius: 8px; 
-  border: 1px solid #cbd5e1; 
+h3 {
+  margin-top: 0;
+  border-left: 5px solid var(--primary);
+  padding-left: 10px;
 }
 
-textarea { resize: none; }
+input, textarea, select, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
 
-button { 
-  margin-top: 15px; 
-  border: none; 
-  border-radius: 8px; 
-  font-weight: bold; 
-  cursor: pointer; 
-  color: #fff; 
-  background: var(--button-bg); 
-  transition: 0.3s; 
+button {
+  background: var(--button-bg);
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 button:hover { background: var(--button-hover); }
 
-table { 
-  width: 100%; 
-  border-collapse: collapse; 
-  margin-top: 15px; 
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
 }
 
-table, th, td { border: 1px solid #cbd5e1; }
-
-th, td { padding: 10px; text-align: left; }
-
-img.produto-img { 
-  width: 100px; 
-  height: 80px; 
-  object-fit: cover; 
-  border-radius: 6px; 
+th, td {
+  border: 1px solid #cbd5e1;
+  padding: 10px;
 }
 
-@media(max-width: 768px){ 
-  .sidebar { width: 200px; } 
-  .main { margin-left: 200px; padding: 20px; } 
+img.produto-img {
+  width: 100px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
 }
 </style>
 </head>
+
 <body>
 
 <div class="sidebar">
   <h2>🛠 Sistema OS</h2>
   <a href="index.html">Entrada de Equipamento</a>
-  <a href="clientes.html">Cadastro de Clientes</a>
-  <a href="visualizar-os.html">Visualizar OS</a>
+  <a href="clientes.html">Clientes</a>
+  <a href="visualizar-os.html">OS</a>
   <a href="financeiro.html">Financeiro</a>
-  <a href="produtos.html">Produtos / Serviços</a>
-  <a href="backup.html">Backup / Restaurar</a>
+  <a href="produtos.html">Produtos</a>
 </div>
 
 <div class="main">
   <div class="card">
     <h3>Cadastro de Produtos e Serviços</h3>
 
-    <input id="produto-nome" placeholder="Nome do Produto ou Serviço">
-    <textarea id="produto-descricao" rows="2" placeholder="Descrição detalhada"></textarea>
-    <input id="produto-valor" type="number" placeholder="Valor (R$)">
-    <input id="produto-foto" placeholder="URL da Foto">
-    <select id="produto-categoria">
+    <input id="nome" placeholder="Nome">
+    <textarea id="descricao" placeholder="Descrição"></textarea>
+    <input id="valor" type="number" placeholder="Valor (R$)">
+    <input id="foto" placeholder="URL da foto">
+    <select id="categoria">
       <option value="servico">Serviço</option>
       <option value="produto">Produto</option>
     </select>
+
     <button onclick="adicionarProduto()">Adicionar</button>
 
     <table>
@@ -150,63 +140,75 @@ img.produto-img {
           <th>Categoria</th>
         </tr>
       </thead>
-      <tbody id="tabela-produtos">
-        <!-- Produtos aparecerão aqui -->
-      </tbody>
+      <tbody id="lista"></tbody>
     </table>
   </div>
 </div>
 
-<script>
-// Adicionar produto/serviço
-function adicionarProduto() {
-  let produto = {
-    nome: document.getElementById("produto-nome").value,
-    descricao: document.getElementById("produto-descricao").value,
-    valor: document.getElementById("produto-valor").value,
-    foto: document.getElementById("produto-foto").value,
-    categoria: document.getElementById("produto-categoria").value
+<!-- 🔥 FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from 
+"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = { 
+  apiKey : "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4" , 
+  authDomain: "sistema-os-1284b.firebaseapp.com",
+  projectId: "sistema-os-1284b",
+  bucket de armazenamento : "sistema-os-1284b.firebasestorage.app" , 
+  messagingSenderId : " 1032102605721" 
+  appId : "1:1032102605721:web:7eba5fc6e4eb9fc17ad908" 
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ➕ Adicionar produto
+window.adicionarProduto = async function () {
+  const produto = {
+    nome: nome.value,
+    descricao: descricao.value,
+    valor: valor.value,
+    foto: foto.value,
+    categoria: categoria.value
   };
 
   if (!produto.nome || !produto.valor) {
-    alert("Preencha pelo menos o nome e o valor!");
+    alert("Preencha nome e valor");
     return;
   }
 
-  let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
-  produtos.push(produto);
-  localStorage.setItem("produtos", JSON.stringify(produtos));
+  await addDoc(collection(db, "produtos"), produto);
+  alert("Salvo com sucesso!");
 
-  // Limpar campos
-  document.getElementById("produto-nome").value = "";
-  document.getElementById("produto-descricao").value = "";
-  document.getElementById("produto-valor").value = "";
-  document.getElementById("produto-foto").value = "";
-  document.getElementById("produto-categoria").value = "servico";
+  nome.value = "";
+  descricao.value = "";
+  valor.value = "";
+  foto.value = "";
+  categoria.value = "servico";
 
   carregarProdutos();
-}
+};
 
-// Carregar produtos na tabela
-function carregarProdutos() {
-  let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
-  let tbody = document.getElementById("tabela-produtos");
-  tbody.innerHTML = "";
+// 📥 Carregar produtos
+async function carregarProdutos() {
+  lista.innerHTML = "";
+  const snapshot = await getDocs(collection(db, "produtos"));
 
-  produtos.forEach(p => {
-    let tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><img src="${p.foto || 'https://via.placeholder.com/100x80?text=Sem+Foto'}" class="produto-img"></td>
-      <td>${p.nome}</td>
-      <td>${p.descricao || 'Sem descrição'}</td>
-      <td>${p.valor}</td>
-      <td>${p.categoria}</td>
+  snapshot.forEach(doc => {
+    const p = doc.data();
+    lista.innerHTML += `
+      <tr>
+        <td><img src="${p.foto || 'https://via.placeholder.com/100'}" class="produto-img"></td>
+        <td>${p.nome}</td>
+        <td>${p.descricao || ''}</td>
+        <td>R$ ${p.valor}</td>
+        <td>${p.categoria}</td>
+      </tr>
     `;
-    tbody.appendChild(tr);
   });
 }
 
-// Carrega produtos ao abrir
 carregarProdutos();
 </script>
 
