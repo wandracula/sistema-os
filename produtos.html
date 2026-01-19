@@ -2,58 +2,150 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Produtos e Serviços</title>
-
+<title>Sistema OS - Produtos e Serviços</title>
 <style>
-body { margin:0; font-family: Arial; background:#f1f5f9; display:flex }
+:root {
+  --bg-color: #f1f5f9;
+  --primary: #2563eb;
+  --card-bg: #ffffff;
+  --text-color: #0f172a;
+  --hover: #e2e8f0;
+  --button-bg: #2563eb;
+  --button-hover: #1e40af;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
 .sidebar {
-  width:240px; background:#0f172a; color:#fff;
-  padding:20px; height:100vh; position:fixed
+  width: 240px;
+  height: 100vh;
+  background: #0f172a;
+  color: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: fixed;
 }
-.sidebar a { color:#fff; display:block; padding:12px; text-decoration:none }
-.sidebar a:hover { background:#334155 }
-.main { margin-left:240px; padding:30px; width:100% }
-.card { background:#fff; padding:20px; border-radius:12px }
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.sidebar a {
+  padding: 12px;
+  margin-bottom: 10px;
+  color: #f1f5f9;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.sidebar a:hover { background: #334155; }
+
+.main {
+  margin-left: 240px;
+  padding: 30px;
+}
+
+.card {
+  background: var(--card-bg);
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 10px 20px rgba(0,0,0,.1);
+  margin-bottom: 25px;
+}
+
+h3 {
+  margin-top: 0;
+  border-left: 5px solid var(--primary);
+  padding-left: 10px;
+}
+
 input, textarea, select, button {
-  width:100%; padding:10px; margin-top:8px
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
 }
-table { width:100%; border-collapse:collapse; margin-top:20px }
-th,td { border:1px solid #ccc; padding:8px }
-img { width:80px; border-radius:6px }
-button { background:#2563eb; color:#fff; border:none; cursor:pointer }
+
+button {
+  background: var(--button-bg);
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover { background: var(--button-hover); }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  border: 1px solid #cbd5e1;
+  padding: 10px;
+  text-align: left;
+}
+
+img.produto-img {
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+}
 </style>
 </head>
-
 <body>
 
 <div class="sidebar">
-  <h3>🛠 Sistema OS</h3>
-  <a href="index.html">Entrada</a>
-  <a href="clientes.html">Clientes</a>
-  <a href="visualizar-os.html">OS</a>
+  <h2>🛠 Sistema OS</h2>
+  <a href="index.html">Entrada de Equipamento</a>
+  <a href="clientes.html">Cadastro de Clientes</a>
+  <a href="visualizar-os.html">Visualizar OS</a>
   <a href="financeiro.html">Financeiro</a>
   <a href="produtos.html">Produtos</a>
+  <a href="backup.html">Backup / Restaurar</a>
 </div>
 
 <div class="main">
   <div class="card">
-    <h3>Cadastro de Produto / Serviço</h3>
+    <h3>Cadastro de Produtos e Serviços</h3>
 
     <input id="nome" placeholder="Nome">
     <textarea id="descricao" placeholder="Descrição"></textarea>
-    <input id="valor" type="number" placeholder="Valor R$">
-    <input id="foto" placeholder="URL da imagem">
+    <input id="valor" type="number" placeholder="Valor (R$)">
+    <input id="foto" placeholder="URL da foto">
     <select id="categoria">
-      <option value="produto">Produto</option>
       <option value="servico">Serviço</option>
+      <option value="produto">Produto</option>
     </select>
+    <label>
+      <input type="checkbox" id="ativo" checked> Ativo na loja
+    </label>
+    <button onclick="salvarProduto()">Salvar Produto</button>
+  </div>
 
-    <button onclick="salvar()">Salvar</button>
-
+  <div class="card">
+    <h3>Produtos Cadastrados</h3>
     <table>
       <thead>
         <tr>
-          <th>Foto</th><th>Nome</th><th>Valor</th><th>Categoria</th>
+          <th>Foto</th>
+          <th>Nome</th>
+          <th>Descrição</th>
+          <th>Valor</th>
+          <th>Categoria</th>
+          <th>Ativo</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="lista"></tbody>
@@ -63,8 +155,7 @@ button { background:#2563eb; color:#fff; border:none; cursor:pointer }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from
-"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
@@ -78,39 +169,102 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-window.salvar = async () => {
-  if (!nome.value || !valor.value) return alert("Preencha nome e valor");
+async function salvarProduto(id) {
+  const produto = {
+    nome: document.getElementById("nome").value,
+    descricao: document.getElementById("descricao").value,
+    valor: Number(document.getElementById("valor").value),
+    foto: document.getElementById("foto").value,
+    categoria: document.getElementById("categoria").value,
+    ativo: document.getElementById("ativo").checked
+  };
 
-  await addDoc(collection(db,"produtos"),{
-    nome:nome.value,
-    descricao:descricao.value,
-    valor:Number(valor.value),
-    foto:foto.value,
-    categoria:categoria.value,
-    ativo:true
-  });
+  if (!produto.nome || !produto.valor) {
+    alert("Preencha nome e valor");
+    return;
+  }
 
-  nome.value=""; descricao.value=""; valor.value=""; foto.value="";
-  carregar();
-};
+  try {
+    if(id) {
+      await updateDoc(doc(db, "produtos", id), produto);
+    } else {
+      await addDoc(collection(db, "produtos"), produto);
+    }
+    limparFormulario();
+    carregarProdutos();
+    alert("Produto salvo com sucesso!");
+  } catch(e) {
+    console.error("Erro ao salvar produto:", e);
+  }
+}
 
-async function carregar(){
-  lista.innerHTML="";
-  const snap = await getDocs(collection(db,"produtos"));
-  snap.forEach(d=>{
-    const p=d.data();
-    lista.innerHTML+=`
-      <tr>
-        <td><img src="${p.foto||'https://via.placeholder.com/80'}"></td>
-        <td>${p.nome}</td>
-        <td>R$ ${p.valor.toFixed(2)}</td>
-        <td>${p.categoria}</td>
-      </tr>
+function limparFormulario() {
+  document.getElementById("nome").value = "";
+  document.getElementById("descricao").value = "";
+  document.getElementById("valor").value = "";
+  document.getElementById("foto").value = "";
+  document.getElementById("categoria").value = "servico";
+  document.getElementById("ativo").checked = true;
+  document.getElementById("salvarProduto").dataset.editId = "";
+}
+
+async function carregarProdutos() {
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  const snapshot = await getDocs(collection(db, "produtos"));
+  snapshot.forEach(docSnap => {
+    const p = docSnap.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><img src="${p.foto || 'https://via.placeholder.com/80'}" class="produto-img"></td>
+      <td>${p.nome}</td>
+      <td>${p.descricao || ''}</td>
+      <td>R$ ${Number(p.valor).toFixed(2)}</td>
+      <td>${p.categoria}</td>
+      <td>${p.ativo ? 'Sim' : 'Não'}</td>
+      <td>
+        <button onclick="editarProduto('${docSnap.id}')">Editar</button>
+        <button onclick="deletarProduto('${docSnap.id}')">Excluir</button>
+      </td>
     `;
+    lista.appendChild(tr);
   });
 }
-carregar();
-</script>
 
+window.editarProduto = async function(id) {
+  const snapshot = await getDocs(collection(db, "produtos"));
+  const docSnap = snapshot.docs.find(d => d.id === id);
+  const p = docSnap.data();
+
+  document.getElementById("nome").value = p.nome;
+  document.getElementById("descricao").value = p.descricao;
+  document.getElementById("valor").value = p.valor;
+  document.getElementById("foto").value = p.foto;
+  document.getElementById("categoria").value = p.categoria;
+  document.getElementById("ativo").checked = p.ativo;
+
+  // Usamos o botão salvar para atualizar
+  document.getElementById("salvarProduto").dataset.editId = id;
+}
+
+window.deletarProduto = async function(id) {
+  if(confirm("Deseja realmente excluir este produto?")) {
+    await deleteDoc(doc(db, "produtos", id));
+    carregarProdutos();
+  }
+}
+
+// Inicial
+carregarProdutos();
+
+// Botão salvar dinâmico
+const btnSalvar = document.createElement("button");
+btnSalvar.textContent = "Salvar Produto";
+btnSalvar.id = "salvarProduto";
+btnSalvar.onclick = () => salvarProduto(btnSalvar.dataset.editId);
+document.querySelector(".card").appendChild(btnSalvar);
+
+</script>
 </body>
 </html>
