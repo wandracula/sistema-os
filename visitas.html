@@ -147,6 +147,16 @@ events:[]
 
 calendar.render();
 
+
+  
+const params =
+new URLSearchParams(location.search);
+
+osnum.value =
+params.get("os") || "";
+
+
+  
 const snap = await getDocs(collection(db,"visitas"));
 
 snap.forEach(doc=>{
