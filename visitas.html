@@ -53,7 +53,6 @@ border-radius:12px;
 
 <h2>📅 Nova Visita</h2>
 
-<input id="osnum" placeholder="Número da OS">
 
 <input id="cliente" placeholder="Cliente">
 
@@ -91,10 +90,35 @@ import {
 getFirestore,
 collection,
 addDoc,
-getDocs
+getDocs,
+deleteDoc,
+doc
 }
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+const db = getFirestore(app);
+
+  async function gerarNumeroOS(){
+
+    const snap = await getDocs(
+        collection(db,"visitas")
+    );
+
+    if(snap.empty) return 1000;
+
+    const numeros = snap.docs.map(d =>
+        Number(d.data().osnum || 0)
+    );
+
+    return Math.max(...numeros) + 1;
+}
+
+
+
+
+
+  
+  
 const firebaseConfig = {
 
 apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
@@ -111,30 +135,35 @@ const db = getFirestore(app);
 
 window.salvarVisita = async ()=>{
 
-await addDoc(collection(db,"visitas"),{
+    const osnum = await gerarNumeroOS();
 
-osnum: osnum.value,
+    await addDoc(collection(db,"visitas"),{
 
-cliente: cliente.value,
+        osnum,
 
-telefone: telefone.value,
+        cliente: cliente.value,
 
-tipo: tipo.value,
+        telefone: telefone.value,
 
-data: data.value,
+        tipo: tipo.value,
 
-hora: hora.value,
+        data: data.value,
 
-obs: obs.value,
+        hora: hora.value,
 
-status:"Agendada"
+        obs: obs.value,
 
-});
+        status:"Agendada",
 
-alert("Visita cadastrada");
+        criadoEm:new Date()
 
-location.reload();
+    });
 
+    alert(
+      `Visita cadastrada com sucesso!\nOS Nº ${osnum}`
+    );
+
+    location.reload();
 }
 
 const calendar = new FullCalendar.Calendar(
@@ -147,6 +176,34 @@ events:[]
 
 calendar.render();
 
+  calendar.on('eventClick', async function(info){
+
+    const e = info.event;
+
+    const confirmar = confirm(
+
+`OS: ${e.title}
+
+Tipo: ${e.extendedProps.tipo}
+
+Telefone: ${e.extendedProps.telefone}
+
+Deseja excluir esta visita?`
+
+    );
+
+    if(confirmar){
+
+        await deleteDoc(
+            doc(db,"visitas",e.id)
+        );
+
+        e.remove();
+
+        alert("Visita removida.");
+    }
+
+});
 
   
 const params =
@@ -157,20 +214,31 @@ params.get("os") || "";
 
 
   
-const snap = await getDocs(collection(db,"visitas"));
+const snap = await getDocs(
+    collection(db,"visitas")
+);
 
-snap.forEach(doc=>{
+snap.forEach(d=>{
 
-const v = doc.data();
+    const v = d.data();
 
-calendar.addEvent({
+    calendar.addEvent({
 
-title:
-`${v.hora} - ${v.cliente}`,
+        id:d.id,
 
-start:v.data
+        title:
+        `OS ${v.osnum} - ${v.cliente}`,
 
-});
+        start:v.data,
+
+        extendedProps:{
+            telefone:v.telefone,
+            tipo:v.tipo,
+            hora:v.hora,
+            obs:v.obs
+        }
+
+    });
 
 });
 
