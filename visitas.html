@@ -1,7 +1,9 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agendamento de Visitas</title>
 
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
@@ -9,73 +11,89 @@
 <style>
 
 body{
-font-family:Arial;
-background:#f1f5f9;
-margin:0;
-padding:20px;
+    font-family:Arial,sans-serif;
+    background:#f1f5f9;
+    margin:0;
+    padding:20px;
 }
 
 .card{
-background:white;
-padding:20px;
-border-radius:12px;
-margin-bottom:20px;
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:20px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
 }
 
-input,select,textarea{
-width:100%;
-padding:10px;
-margin-top:8px;
-margin-bottom:10px;
+h2{
+    margin-top:0;
+}
+
+input,
+select,
+textarea{
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    margin-bottom:10px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
 }
 
 button{
-padding:12px;
-background:#2563eb;
-color:white;
-border:none;
-border-radius:8px;
-cursor:pointer;
+    padding:12px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+button:hover{
+    background:#1e40af;
 }
 
 #calendar{
-background:white;
-padding:15px;
-border-radius:12px;
+    background:white;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+}
+
+.fc-event{
+    cursor:pointer;
 }
 
 </style>
-
 </head>
 <body>
 
 <div class="card">
 
-<h2>📅 Nova Visita</h2>
+    <h2>📅 Nova Visita</h2>
 
+    <input id="cliente" placeholder="Nome do Cliente">
 
+    <input id="telefone" placeholder="Telefone">
 
-<input id="cliente" placeholder="Cliente">
+    <select id="tipo">
+        <option>Orçamento</option>
+        <option>Manutenção</option>
+        <option>Entrega</option>
+        <option>Instalação</option>
+        <option>Retorno</option>
+    </select>
 
-<input id="telefone" placeholder="Telefone">
+    <input id="data" type="date">
 
-<select id="tipo">
-<option>Orçamento</option>
-<option>Manutenção</option>
-<option>Entrega</option>
-<option>Instalação</option>
-<option>Retorno</option>
-</select>
+    <input id="hora" type="time">
 
-<input id="data" type="date">
+    <textarea id="obs" placeholder="Observações"></textarea>
 
-<input id="hora" type="time">
-
-<textarea id="obs" placeholder="Observações"></textarea>
-
-<button onclick="salvarVisita()">
-Salvar Visita
-</button>
+    <button onclick="salvarVisita()">
+        Salvar Visita
+    </button>
 
 </div>
 
@@ -85,27 +103,44 @@ Salvar Visita
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
 import {
-getFirestore,
-collection,
-addDoc,
-getDocs,
-deleteDoc,
-doc
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    deleteDoc,
+    doc
 }
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  
+const firebaseConfig = {
 
-  async function gerarNumeroOS(){
+    apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+    authDomain: "sistema-os-1284b.firebaseapp.com",
+    projectId: "sistema-os-1284b",
+    storageBucket: "sistema-os-1284b.appspot.com",
+    messagingSenderId: "1032102605721",
+    appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* GERAR OS AUTOMÁTICA */
+
+async function gerarNumeroOS(){
 
     const snap = await getDocs(
         collection(db,"visitas")
     );
 
-    if(snap.empty) return 1000;
+    if(snap.empty){
+        return 1000;
+    }
 
     const numeros = snap.docs.map(d =>
         Number(d.data().osnum || 0)
@@ -114,104 +149,93 @@ from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     return Math.max(...numeros) + 1;
 }
 
-  
-  
-const firebaseConfig = {
-
-apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
-authDomain: "sistema-os-1284b.firebaseapp.com",
-projectId: "sistema-os-1284b",
-storageBucket: "sistema-os-1284b.appspot.com",
-messagingSenderId: "1032102605721",
-appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
-
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+/* SALVAR VISITA */
 
 window.salvarVisita = async ()=>{
 
+    if(!cliente.value.trim()){
+        alert("Informe o cliente.");
+        return;
+    }
+
     const osnum = await gerarNumeroOS();
 
-    await addDoc(collection(db,"visitas"),{
-
-        osnum,
-
-        cliente: cliente.value,
-
-        telefone: telefone.value,
-
-        tipo: tipo.value,
-
-        data: data.value,
-
-        hora: hora.value,
-
-        obs: obs.value,
-
-        status:"Agendada",
-
-        criadoEm:new Date()
-
-    });
+    await addDoc(
+        collection(db,"visitas"),
+        {
+            osnum,
+            cliente: cliente.value,
+            telefone: telefone.value,
+            tipo: tipo.value,
+            data: data.value,
+            hora: hora.value,
+            obs: obs.value,
+            status:"Agendada",
+            criadoEm:new Date()
+        }
+    );
 
     alert(
-      `Visita cadastrada com sucesso!\nOS Nº ${osnum}`
+        `Visita cadastrada!\n\nOS Nº ${osnum}`
     );
 
     location.reload();
-}
+};
+
+/* CALENDÁRIO */
 
 const calendar = new FullCalendar.Calendar(
-document.getElementById('calendar'),
-{
-initialView:'dayGridMonth',
-locale:'pt-br',
-events:[]
-});
+    document.getElementById("calendar"),
+    {
 
-calendar.render();
+        initialView:"dayGridMonth",
 
-calendar.on('eventClick', async function(info){
+        locale:"pt-br",
 
-    const e = info.event;
+        height:"auto",
 
-    const confirmar = confirm(
+        eventClick: async function(info){
 
-`OS: ${e.title}
+            const e = info.event;
 
-Tipo: ${e.extendedProps.tipo}
+            const confirmar = confirm(
+
+`OS ${e.extendedProps.osnum}
+
+Cliente: ${e.extendedProps.cliente}
 
 Telefone: ${e.extendedProps.telefone}
 
+Tipo: ${e.extendedProps.tipo}
+
 Deseja excluir esta visita?`
 
-    );
+            );
 
-    if(confirmar){
+            if(confirmar){
 
-        await deleteDoc(
-            doc(db,"visitas",e.id)
-        );
+                await deleteDoc(
+                    doc(
+                        db,
+                        "visitas",
+                        e.id
+                    )
+                );
 
-        e.remove();
+                e.remove();
 
-        alert("Visita removida.");
+                alert("Visita excluída com sucesso.");
+            }
+
+        }
+
     }
+);
 
-});
-  
+calendar.render();
 
-  
-const params =
-new URLSearchParams(location.search);
+/* CARREGAR VISITAS */
 
-osnum.value =
-params.get("os") || "";
-
-
-  
 const snap = await getDocs(
     collection(db,"visitas")
 );
@@ -225,24 +249,26 @@ snap.forEach(d=>{
         id:d.id,
 
         title:
-        `OS ${v.osnum} - ${v.cliente}`,
+        `${v.hora} - ${v.cliente}`,
 
         start:v.data,
 
         extendedProps:{
+
+            osnum:v.osnum,
+            cliente:v.cliente,
             telefone:v.telefone,
             tipo:v.tipo,
-            hora:v.hora,
             obs:v.obs
+
         }
 
     });
 
 });
 
-  
-
 </script>
 
 </body>
 </html>
+```
