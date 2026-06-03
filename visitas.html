@@ -169,18 +169,16 @@ window.salvarVisita = async ()=>{
 const calendar = new FullCalendar.Calendar(
 document.getElementById('calendar'),
 {
-initialView:'dayGridMonth',
-locale:'pt-br',
-events:[]
-});
+    initialView:'dayGridMonth',
+    locale:'pt-br',
 
-calendar.render();
+    events:[],
 
-  calendar.on('eventClick', async function(info){
+    eventClick: async function(info){
 
-    const e = info.event;
+        const e = info.event;
 
-    const confirmar = confirm(
+        const confirmar = confirm(
 
 `OS: ${e.title}
 
@@ -190,20 +188,23 @@ Telefone: ${e.extendedProps.telefone}
 
 Deseja excluir esta visita?`
 
-    );
-
-    if(confirmar){
-
-        await deleteDoc(
-            doc(db,"visitas",e.id)
         );
 
-        e.remove();
+        if(confirmar){
 
-        alert("Visita removida.");
+            await deleteDoc(
+                doc(db,"visitas",e.id)
+            );
+
+            e.remove();
+
+            alert("Visita removida.");
+        }
+
     }
-
 });
+
+calendar.render();
 
   
 const params =
