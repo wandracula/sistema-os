@@ -161,6 +161,7 @@ async function carregar() {
           <td>
             <button onclick='pdfOS(${JSON.stringify(os)})'>OS</button>
             <button onclick='recibo(${JSON.stringify(os)})'>Recibo</button>
+            <button onclick="agendarVisita('${os.osnum}')">Agendar Visita</button>
           </td>
         </tr>
       `;
@@ -183,6 +184,7 @@ async function carregar() {
           <td>
             <button onclick="salvar('${id}')">Salvar</button>
             <button onclick='pdfOS(${JSON.stringify(os)})'>PDF OS</button>
+            <button onclick="agendarVisita('${os.osnum}')">Agendar Visita</button>
           </td>
         </tr>
       `;
