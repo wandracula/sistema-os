@@ -1,3 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+<meta charset="UTF-8">
+<title>Loja OS</title>
+
+<style>
+:root{
+    --azul:#38bdf8;
+    --azul-escuro:#0284c7;
+    --amarelo:#facc15;
+    --amarelo-hover:#eab308;
+    --branco:#ffffff;
+    --cinza:#f8fafc;
+    --texto:#1e293b;
+    --borda:#e2e8f0;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    background:var(--cinza);
+    color:var(--texto);
+}
+
+/* HEADER */
+
+.header{
+    background:linear-gradient(135deg,var(--azul),var(--azul-escuro));
+    color:white;
+    text-align:center;
+    padding:30px;
+    box-shadow:0 5px 20px rgba(0,0,0,.15);
+}
+
+.header h1{
+    font-size:34px;
+    margin-bottom:10px;
+}
+
+.header p{
+    opacity:.95;
+}
+
+/* BANNER */
+
+.banner{
+    background:white;
+    margin:25px auto;
+    max-width:1400px;
+    border-radius:20px;
+    padding:30px;
+    text-align:center;
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+.banner h2{
+    color:var(--azul-escuro);
+    font-size:30px;
+}
+
+.banner span{
+    color:#f59e0b;
+}
+
+/* FILTROS */
+
+.filters{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    flex-wrap:wrap;
+    margin:30px;
+}
+
+.filters input,
+.filters select{
+    padding:14px;
+    border:2px solid #dbeafe;
+    border-radius:12px;
+    min-width:260px;
+    background:white;
+}
+
+.filters input:focus,
+.filters select:focus{
+    outline:none;
+    border-color:var(--azul);
+}
+
+/* PRODUTOS */
+
+.container{
+    max-width:1400px;
+    margin:auto;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    gap:25px;
+    padding:20px;
+}
+
+.card{
+    background:white;
+    border-radius:18px;
+    overflow:hidden;
+    transition:.3s;
+    border:1px solid var(--borda);
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+.card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 15px 35px rgba(0,0,0,.15);
+}
+
+.card img{
+    width:100%;
+    height:240px;
+    object-fit:cover;
+}
+
+.card-body{
+    padding:20px;
+}
+
+.card-body h4{
+    font-size:20px;
+    margin-bottom:10px;
+}
+
+.card-body p{
+    color:#64748b;
+    min-height:70px;
+    line-height:1.5;
+}
+
+.preco{
+    display:block;
+    font-size:30px;
+    color:var(--azul-escuro);
+    font-weight:bold;
+    margin:15px 0;
+}
+
+.btn-comprar{
+    width:100%;
+    border:none;
+    padding:14px;
+    border-radius:12px;
+    background:var(--amarelo);
+    color:#111827;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.btn-comprar:hover{
+    background:var(--amarelo-hover);
+}
+
+.contact{
+    margin-top:40px;
+    background:white;
+    padding:30px;
+    text-align:center;
+    border-top:1px solid var(--borda);
+}
+
+.contact strong{
+    color:var(--azul-escuro);
+}
+
+@media(max-width:768px){
+    .header h1{
+        font-size:26px;
+    }
+
+    .banner h2{
+        font-size:22px;
+    }
+
+    .container{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+</head>
+<body>
+
+
+
+<div class="header">
+    <h1>🛒 Sistema OS Store</h1>
+    <p>Produtos de qualidade com entrega rápida e atendimento especializado</p>
+</div>
+
+<div class="banner">
+    <h2>🔥 Ofertas Especiais da Semana</h2>
+    <p>Economize até <span>30%</span> em produtos selecionados</p>
+</div>
+
+<div class="filters">
+  <input type="text" id="buscar" placeholder="Buscar produto..." oninput="filtrarProdutos()">
+  <select id="categoriaFiltro" onchange="filtrarProdutos()">
+    <option value="">Todas Categorias</option>
+    <option value="produto">Produto</option>
+    <option value="servico">Serviço</option>
+  </select>
+</div>
+
+<div class="container" id="produtos"></div>
+
+<div class="contact">
+  Para mais informações, entre em contato: 
+  <strong>contato@sistemaos.com</strong>
+</div>
+
+<!-- 🔥 FIREBASE -->
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -199,3 +424,8 @@ Valor: R$ ${valor}`
 carregarProdutos();
 
 </script>
+
+
+</body>
+</html>
+
