@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loja Premium</title>
+<style>
+:root{--azul:#3b82f6;--am:#facc15;}
+body{margin:0;font-family:Segoe UI;background:#f8fafc}
+header{background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;padding:30px;text-align:center}
+.banner{background:#fff;padding:30px;text-align:center;margin:20px;border-radius:16px;box-shadow:0 8px 25px rgba(0,0,0,.08)}
+.top{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:0 20px}
+input,select{padding:12px;border-radius:10px;border:1px solid #ddd}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;padding:20px}
+.card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 25px rgba(0,0,0,.08)}
+.card img{width:100%;height:220px;object-fit:cover}
+.info{padding:15px}
+.preco{font-size:28px;font-weight:bold;color:#eab308}
+.btn{width:100%;padding:12px;background:#3b82f6;color:#fff;border:0;border-radius:10px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🛒 Loja Premium Sistema OS</h1>
+</header>
+
+<div class="banner">
+<h2>Ofertas e Destaques</h2>
+<p>Produtos cadastrados automaticamente pelo Firebase.</p>
+</div>
+
+<div class="top">
+<input id="buscar" placeholder="Buscar produto">
+<select id="categoria">
+<option value="">Todas Categorias</option>
+<option value="produto">Produtos</option>
+<option value="servico">Serviços</option>
+</select>
+</div>
+
+<div id="produtos" class="grid"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig={
+apiKey:"SUA_API_KEY",
+authDomain:"SEU_AUTH_DOMAIN",
+projectId:"SEU_PROJECT_ID"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+
+let produtos=[];
+
+async function carregar(){
+const snap=await getDocs(collection(db,"produtos"));
+produtos=[];
+snap.forEach(d=>produtos.push(d.data()));
+render();
+}
+
+function render(){
+const area=document.getElementById("produtos");
+const busca=document.getElementById("buscar").value.toLowerCase();
+const cat=document.getElementById("categoria").value;
+
+area.innerHTML="";
+
+produtos.forEach(p=>{
+if(p.ativo===false)return;
+if(cat && p.categoria!==cat)return;
+if(!p.nome.toLowerCase().includes(busca))return;
+
+area.innerHTML+=`
+<div class="card">
+<img src="${p.foto||'https://via.placeholder.com/400x300'}">
+<div class="info">
+<h3>${p.nome}</h3>
+<p>${p.descricao||''}</p>
+<div class="preco">R$ ${Number(p.valor||0).toFixed(2)}</div>
+<br>
+<button class="btn" onclick="comprar('${p.nome}')">Comprar</button>
+</div>
+</div>`;
+});
+}
+
+window.comprar=function(nome){
+const msg=encodeURIComponent("Olá, tenho interesse em: "+nome);
+window.open("https://wa.me/55SEUNUMERO?text="+msg);
+}
+
+buscar.oninput=render;
+categoria.onchange=render;
+
+carregar();
+</script>
+
+</body>
+</html>
