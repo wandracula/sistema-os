@@ -1,15 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<div class="header">
-    <h1>🛒 Sistema OS Store</h1>
-    <p>Produtos de qualidade com entrega rápida e atendimento especializado</p>
-</div>
 
-<div class="banner">
-    <h2>🔥 Ofertas Especiais da Semana</h2>
-    <p>Economize até <span>30%</span> em produtos selecionados</p>
-</div>
 <style>
 :root{
     --azul:#38bdf8;
@@ -199,7 +191,17 @@ body{
 </head>
 <body>
 
-<div class="header">🛒 Loja de Produtos - Sistema OS</div>
+<body>
+
+<div class="header">
+    <h1>🛒 Sistema OS Store</h1>
+    <p>Produtos de qualidade com entrega rápida e atendimento especializado</p>
+</div>
+
+<div class="banner">
+    <h2>🔥 Ofertas Especiais da Semana</h2>
+    <p>Economize até <span>30%</span> em produtos selecionados</p>
+</div>
 
 <div class="filters">
   <input type="text" id="buscar" placeholder="Buscar produto..." oninput="filtrarProdutos()">
@@ -246,7 +248,7 @@ async function carregarProdutos() {
     const snapshot = await getDocs(collection(db, "produtos"));
     snapshot.forEach(docSnap => {
       const p = docSnap.data();
-     //null if(p.categoria !== "produto" || !p.ativo) return;
+      if(p.categoria !== "produto" || !p.ativo) return;
       p.id = docSnap.id;
       produtosLista.push(p);
       console.log(docSnap.data());
@@ -260,51 +262,93 @@ async function carregarProdutos() {
 
 // Filtrar produtos
 window.filtrarProdutos = function() {
+
   const container = document.getElementById("produtos");
   const busca = document.getElementById("buscar").value.toLowerCase();
   const cat = document.getElementById("categoriaFiltro").value;
 
   container.innerHTML = "";
+
   produtosLista.forEach(p => {
+
     if (cat && p.categoria !== cat) return;
+
     if (!p.nome.toLowerCase().includes(busca)) return;
 
     const card = document.createElement("div");
+
     card.className = "card";
+
     card.innerHTML = `
-    
+      <img src="${p.foto || 'https://via.placeholder.com/400x250'}">
+
+      <div class="card-body">
+        <h4>${p.nome}</h4>
+
+        <p>${p.descricao || ''}</p>
+
+        <span class="preco">
+          R$ ${Number(p.valor).toFixed(2)}
+        </span>
+
+        <button class="btn-comprar"
+          onclick="solicitarProduto(
+            '${encodeURIComponent(p.nome)}',
+            '${encodeURIComponent(p.descricao || '')}',
+            '${p.valor}'
+          )">
+          Comprar Agora
+        </button>
+      </div>
+    `;
+
     container.appendChild(card);
 
-<img src="${p.foto || 'https://via.placeholder.com/400x250'}">
+  });
 
-<div class="card-body">
-    <h4>${p.nome}</h4>
-
-    <p>${p.descricao || ''}</p>
-
-    <span class="preco">
-        R$ ${Number(p.valor).toFixed(2)}
-    </span>
-
-    <button class="btn-comprar"
-        onclick="solicitarProduto(
-        '${encodeURIComponent(p.nome)}',
-        '${encodeURIComponent(p.descricao || '')}',
-        '${p.valor}'
-    )">
-        Comprar Agora
-    </button>
-</div>
-`;
-
+}
 // Abrir email e registrar no financeiro
 window.solicitarProduto = async (nome, descricao, valor) => {
-  
-  produtosLista.forEach
-  filtrarProdutos()
-  
+
   const produtoNome = decodeURIComponent(nome);
   const produtoDesc = decodeURIComponent(descricao);
+
+  const assunto = encodeURIComponent(
+    `Solicitação de Produto: ${produtoNome}`
+  );
+
+  const corpo = encodeURIComponent(
+`Olá,
+
+Gostaria de solicitar o seguinte produto:
+
+Nome: ${produtoNome}
+Descrição: ${produtoDesc}
+Valor: R$ ${valor}
+
+Obrigado!`
+  );
+
+  window.location.href =
+    `mailto:contato@sistemaos.com?subject=${assunto}&body=${corpo}`;
+
+  try {
+
+    await addDoc(collection(db, "financeiro"), {
+      descricao: produtoNome,
+      valor: Number(valor),
+      status: "a receber",
+      data: new Date().toISOString(),
+      tipo: "produto"
+    });
+
+  } catch(e) {
+
+    console.error(e);
+
+  }
+
+};
 
   // Abrir cliente de email
   const assunto = encodeURIComponent(`Solicitação de Produto: ${produtoNome}`);
