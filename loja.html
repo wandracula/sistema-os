@@ -249,6 +249,7 @@ async function carregarProdutos() {
       if(p.categoria !== "produto" || !p.ativo) return;
       p.id = docSnap.id;
       produtosLista.push(p);
+      console.log(docSnap.data());
     });
 
     filtrarProdutos();
@@ -271,6 +272,9 @@ window.filtrarProdutos = function() {
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
+    
+    container.appendChild(card);
+
 <img src="${p.foto || 'https://via.placeholder.com/400x250'}">
 
 <div class="card-body">
@@ -295,6 +299,10 @@ window.filtrarProdutos = function() {
 
 // Abrir email e registrar no financeiro
 window.solicitarProduto = async (nome, descricao, valor) => {
+  
+  produtosLista.forEach
+  filtrarProdutos()
+  
   const produtoNome = decodeURIComponent(nome);
   const produtoDesc = decodeURIComponent(descricao);
 
