@@ -246,7 +246,7 @@ async function carregarProdutos() {
     const snapshot = await getDocs(collection(db, "produtos"));
     snapshot.forEach(docSnap => {
       const p = docSnap.data();
-      if(p.categoria !== "produto" || !p.ativo) return;
+     //null if(p.categoria !== "produto" || !p.ativo) return;
       p.id = docSnap.id;
       produtosLista.push(p);
       console.log(docSnap.data());
