@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Produtos Premium</title>
+<style>
+:root{--azul:#3b82f6;--azul2:#2563eb;--am:#facc15;}
+body{margin:0;font-family:Segoe UI;background:#f8fafc}
+header{background:linear-gradient(135deg,var(--azul),#60a5fa);color:#fff;padding:20px}
+.wrap{max-width:1400px;margin:auto;padding:20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+.stat,.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 8px 25px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+input,textarea,select,button{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px solid #ddd}
+button{background:var(--azul);color:#fff;border:0;font-weight:bold}
+table{width:100%;border-collapse:collapse}.t td,.t th{padding:10px;border-bottom:1px solid #eee}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>Sistema OS - Produtos Premium</h1></header>
+<div class="wrap">
+<div class="stats">
+<div class="stat"><h3>Total Produtos</h3><div id="s1">0</div></div>
+<div class="stat"><h3>Ativos</h3><div id="s2">0</div></div>
+<div class="stat"><h3>Destaques</h3><div id="s3">0</div></div>
+</div>
+
+<div class="grid" style="margin-top:20px">
+<div class="card">
+<h2>Cadastro</h2>
+<input id="nome" placeholder="Nome">
+<textarea id="descricao" placeholder="Descrição"></textarea>
+<input id="valor" type="number" placeholder="Valor">
+<input id="estoque" type="number" placeholder="Estoque">
+<input id="foto" placeholder="URL da imagem">
+<select id="categoria"><option>produto</option><option>servico</option></select>
+<label><input type="checkbox" id="ativo" checked> Ativo</label><br>
+<label><input type="checkbox" id="destaque"> Destaque</label>
+<button id="salvar">Salvar</button>
+</div>
+
+<div class="card">
+<h2>Pesquisar</h2>
+<input id="buscar" placeholder="Buscar produto">
+<table class="t">
+<thead><tr><th>Nome</th><th>Valor</th><th>Estoque</th></tr></thead>
+<tbody id="lista"></tbody>
+</table>
+</div>
+</div>
+</div>
+
+<!-- Cole aqui sua configuração Firebase -->
+</body>
+</html>
