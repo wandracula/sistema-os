@@ -225,20 +225,128 @@ function pdfOS(os) {
   pdf.save(`OS-${os.osnum}.pdf`);
 }
 
-
+// recibo
 function recibo(os){
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
   let y=20;
-  pdf.setFontSize(14); pdf.text("RECIBO",95,y); y+=10;
-  pdf.setFontSize(10);
-  pdf.text(`Recebi de: ${os.cliente}`,14,y); y+=6;
-  pdf.text(`Valor: R$ ${(os.valor||150).toFixed(2)}`,14,y); y+=6;
-  pdf.text(`Referente à OS Nº ${os.osnum}`,14,y); y+=6;
-  pdf.text("Serviço prestado conforme combinado.",14,y); y+=10;
-  pdf.text(`Data: ${new Date().toLocaleDateString()}`,14,y); y+=12;
-  pdf.text("Assinatura:",14,y); pdf.line(40,y,120,y);
-  pdf.save(`Recibo-OS-${os.osnum}.pdf`);
+  // Moldura
+    pdf.setDrawColor(0, 51, 102);
+    pdf.setLineWidth(0.8);
+    pdf.rect(5, 5, 200, 287);
+
+    // Cabeçalho
+    pdf.setFillColor(0, 51, 102);
+    pdf.rect(5, 5, 200, 25, "F");
+
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
+    pdf.setFont(undefined, "bold");
+    pdf.text("WSM INFORMÁTICA", 65, 16);
+
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, "normal");
+    pdf.text("Assistência Técnica Especializada", 65, 23);
+
+    // Número do recibo
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(12);
+    pdf.setFont(undefined, "bold");
+    pdf.text(`RECIBO Nº ${Date.now()}`, 14, 40);
+
+    pdf.setFont(undefined, "normal");
+    pdf.text(`Data: ${new Date().toLocaleDateString()}`, 150, 40);
+
+    // Cliente
+    pdf.setFillColor(230, 230, 230);
+    pdf.rect(10, 50, 190, 10, "F");
+
+    pdf.setFont(undefined, "bold");
+    pdf.text("DADOS DO CLIENTE", 14, 57);
+
+    pdf.setFont(undefined, "normal");
+
+    pdf.text(`Nome: ${os.cliente || ""}`, 14, 70);
+    pdf.text(`CPF/CNPJ: ${os.cpf || os.cnpj || "Não informado"}`, 14, 78);
+    pdf.text(`Telefone: ${os.telefone || ""}`, 14, 86);
+
+    // Equipamento
+    pdf.setFillColor(230, 230, 230);
+    pdf.rect(10, 95, 190, 10, "F");
+
+    pdf.setFont(undefined, "bold");
+    pdf.text("EQUIPAMENTO", 14, 102);
+
+    pdf.setFont(undefined, "normal");
+
+    pdf.text(`Equipamento: ${os.equipamento || ""}`, 14, 115);
+    pdf.text(`Marca: ${os.marca || ""}`, 14, 123);
+    pdf.text(`Nº Série: ${os.serie || ""}`, 14, 131);
+
+    // Serviço
+    pdf.setFillColor(230, 230, 230);
+    pdf.rect(10, 140, 190, 10, "F");
+
+    pdf.setFont(undefined, "bold");
+    pdf.text("SERVIÇOS EXECUTADOS", 14, 147);
+
+    pdf.setFont(undefined, "normal");
+
+    pdf.text(`OS Nº: ${os.osnum}`, 14, 160);
+
+    pdf.text(
+        `Valor Recebido: R$ ${(os.valor || 150).toFixed(2)}`,
+        14,
+        168
+    );
+
+    pdf.text(
+        `Descrição: ${os.descricao || ""}`,
+        14,
+        176
+    );
+
+    // Garantia
+    pdf.setFillColor(255, 255, 204);
+    pdf.rect(10, 190, 190, 28, "F");
+
+    pdf.setFont(undefined, "bold");
+    pdf.text("GARANTIA DO SERVIÇO", 14, 198);
+
+    pdf.setFont(undefined, "normal");
+    pdf.setFontSize(10);
+
+    pdf.text(
+        "Garantia de 90 dias para os serviços executados.",
+        14,
+        206
+    );
+
+    pdf.text(
+        "Não cobre mau uso, quedas, oxidação, líquidos ou violação do equipamento.",
+        14,
+        213
+    );
+
+    // Assinaturas
+    pdf.line(20, 245, 90, 245);
+    pdf.line(120, 245, 190, 245);
+
+    pdf.text("Cliente", 45, 252);
+    pdf.text("WSM Informática", 135, 252);
+
+    // Rodapé
+    pdf.setDrawColor(0, 51, 102);
+    pdf.line(10, 275, 200, 275);
+
+    pdf.setFontSize(9);
+    pdf.text(
+        "WSM Informática - Assistência Técnica Especializada",
+        50,
+        282
+    );
+
+    pdf.save(`Recibo-${os.osnum}.pdf`);
 }
 
 window.salvar=salvar;
