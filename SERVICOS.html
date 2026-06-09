@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serviços Rápidos V2</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0}
+.sidebar{position:fixed;left:0;top:0;width:240px;height:100vh;background:#0f172a;color:#fff;padding:20px;box-sizing:border-box}
+.sidebar a{display:block;color:#fff;text-decoration:none;padding:10px;border-radius:6px}
+.sidebar a:hover{background:#334155}
+.main{margin-left:260px;padding:20px}
+.card{background:#fff;padding:20px;border-radius:12px;margin-bottom:20px}
+input,textarea,button{width:100%;padding:10px;margin-top:8px;box-sizing:border-box}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:8px}
+button{background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="sidebar">
+<h3>🛠 Sistema OS</h3>
+<a href="index.html">Entrada de Equipamento</a>
+<a href="clientes.html">Cadastro de Clientes</a>
+<a href="visualizar-os.html">Visualizar OS</a>
+<a href="financeiro.html">Financeiro</a>
+<a href="servicos.html">Serviços Rápidos</a>
+</div>
+
+<div class="main">
+<div class="card">
+<h2>Novo Serviço</h2>
+<input id="cliente" placeholder="Cliente">
+<input id="solicitante" placeholder="Solicitante">
+<textarea id="descricao" placeholder="Descrição"></textarea>
+<input id="valor" type="number" placeholder="Valor">
+<button onclick="salvarServico()">Salvar Serviço</button>
+</div>
+
+<div class="card">
+<h2>Serviços</h2>
+<table>
+<thead>
+<tr>
+<th>Cliente</th><th>Solicitante</th><th>Descrição</th><th>Valor</th><th>Status</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+ apiKey: "SUA_API_KEY",
+ authDomain: "SEU_AUTH_DOMAIN",
+ projectId: "SEU_PROJECT_ID",
+ storageBucket: "SEU_STORAGE_BUCKET",
+ messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+ appId: "SEU_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+async function salvarServico(){
+ const cliente=document.getElementById('cliente').value;
+ const solicitante=document.getElementById('solicitante').value;
+ const descricao=document.getElementById('descricao').value;
+ const valor=Number(document.getElementById('valor').value);
+
+ await addDoc(collection(db,"servicosRapidos"),{
+   cliente,solicitante,descricao,valor,status:"Pendente",data:serverTimestamp()
+ });
+ carregar();
+}
+
+async function carregar(){
+ const tb=document.getElementById('lista');
+ tb.innerHTML='';
+ const snap=await getDocs(collection(db,"servicosRapidos"));
+ snap.forEach(d=>{
+   const s=d.data();
+   tb.innerHTML+=`<tr>
+   <td>${s.cliente||''}</td>
+   <td>${s.solicitante||''}</td>
+   <td>${s.descricao||''}</td>
+   <td>R$ ${(Number(s.valor)||0).toFixed(2)}</td>
+   <td>${s.status||''}</td>
+   </tr>`;
+ });
+}
+
+window.salvarServico=salvarServico;
+carregar();
+</script>
+</body>
+</html>
