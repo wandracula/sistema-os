@@ -185,12 +185,14 @@ const valor = Number(document.getElementById("valor").value) || 0;
 
   document.querySelectorAll("input, textarea").forEach(el => el.value = "");
   document.getElementById("valor").value = 0;
-  document.getElementById("status").value = "Pendente";
-  document.getElementById("clienteSelect").value = "";
-
 document.getElementById("equipamento").value = "";
 document.getElementById("marca").value = "";
 document.getElementById("serie").value = "";
+  
+  document.getElementById("status").value = "Pendente";
+  document.getElementById("clienteSelect").value = "";
+
+
 
   carregarClientes();
 }
