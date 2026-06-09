@@ -226,60 +226,18 @@ function pdfOS(os) {
 }
 
 
-/* RECIBO */
 function recibo(os){
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
-
-  let y = 20;
-
-  // Cabeçalho
-  pdf.setFontSize(16);
-  pdf.text("RECIBO DE PAGAMENTO", 65, y);
-  y += 15;
-
+  let y=20;
+  pdf.setFontSize(14); pdf.text("RECIBO",95,y); y+=10;
   pdf.setFontSize(10);
-
-  pdf.text("WSM Informática", 14, y);
-  y += 6;
-
-  pdf.text("CNPJ: 00.000.000/0001-00", 14, y);
-  y += 12;
-
-  pdf.text(`Recebi de: ${os.cliente}`, 14, y);
-  y += 8;
-
-  pdf.text(
-    `A importância de R$ ${(os.valor || 150).toFixed(2)}`,
-    14,
-    y
-  );
-  y += 8;
-
-  pdf.text(
-    `Referente aos serviços executados na Ordem de Serviço nº ${os.osnum}.`,
-    14,
-    y
-  );
-  y += 8;
-
-  pdf.text(
-    "Declaro que recebi a quantia acima e dou plena quitação.",
-    14,
-    y
-  );
-  y += 15;
-
-  pdf.text(`Data: ${new Date().toLocaleDateString()}`, 14, y);
-  y += 25;
-
-  // Assinaturas
-  pdf.line(20, y, 90, y);
-  pdf.line(120, y, 190, y);
-
-  pdf.text("Cliente", 45, y + 5);
-  pdf.text("Responsável Técnico", 135, y + 5);
-
+  pdf.text(`Recebi de: ${os.cliente}`,14,y); y+=6;
+  pdf.text(`Valor: R$ ${(os.valor||150).toFixed(2)}`,14,y); y+=6;
+  pdf.text(`Referente à OS Nº ${os.osnum}`,14,y); y+=6;
+  pdf.text("Serviço prestado conforme combinado.",14,y); y+=10;
+  pdf.text(`Data: ${new Date().toLocaleDateString()}`,14,y); y+=12;
+  pdf.text("Assinatura:",14,y); pdf.line(40,y,120,y);
   pdf.save(`Recibo-OS-${os.osnum}.pdf`);
 }
 
@@ -287,6 +245,7 @@ window.salvar=salvar;
 window.pdfOS=pdfOS;
 window.recibo=recibo;
 carregar();
+
   
 // MENU MOBILE
 function toggleMenu(){ document.getElementById('sidebar').classList.toggle('show'); }
