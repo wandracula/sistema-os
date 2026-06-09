@@ -68,21 +68,18 @@ const firebaseConfig = {
 };
 
 
-const clientesRef = collection(db, "clientes");
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+const clientesRef = collection(db, "clientes");
+
 async function salvarServico(){
- const cliente=document.getElementById('cliente').value;
+ const cliente = document.getElementById('clienteSelect').value;
  const solicitante=document.getElementById('solicitante').value;
  const descricao=document.getElementById('descricao').value;
  const valor=Number(document.getElementById('valor').value);
 
- await addDoc(collection(db,"servicosRapidos"),{
-   cliente,solicitante,descricao,valor,status:"Pendente",data:serverTimestamp()
- });
- carregar();
-}
+
 
 async function carregarClientes() {
 
@@ -119,28 +116,43 @@ async function carregarClientes() {
     data:new Date()
 });
     
-async function carregar(){
- const tb=document.getElementById('lista');
- tb.innerHTML='';
- const snap=await getDocs(collection(db,"servicosRapidos"));
- snap.forEach(d=>{
-   const s=d.data();
-   tb.innerHTML+=`<tr>
-   <td>${s.cliente||''}</td>
-   <td>${s.solicitante||''}</td>
-   <td>${s.descricao||''}</td>
-   <td>R$ ${(Number(s.valor)||0).toFixed(2)}</td>
-   <td>${s.status||''}</td>
-   </tr>`;
+async function salvarServico(){
+
+ const cliente =
+ document.getElementById('clienteSelect').value;
+
+ const solicitante =
+ document.getElementById('solicitante').value;
+
+ const descricao =
+ document.getElementById('descricao').value;
+
+ const valor =
+ Number(document.getElementById('valor').value);
+
+ if(!cliente){
+    alert("Selecione um cliente");
+    return;
+ }
+
+ await addDoc(collection(db,"servicosRapidos"),{
+   cliente,
+   solicitante,
+   descricao,
+   valor,
+   status:"Pendente",
+   data:serverTimestamp()
  });
+
+ carregar();
+
 }
 
 window.salvarServico = salvarServico;
 
 carregarClientes();
-carregarServicos();
-
-    
+carregar();
+    </script>
 </script>
 </body>
 </html>
