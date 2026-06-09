@@ -142,7 +142,16 @@ async function gerarOS() {
 }
 
 async function salvarOS() {
+const clienteSelect = document.getElementById("clienteSelect").value;
+  const novoCliente = document.getElementById("novoCliente").value.trim();
 
+  const cliente = clienteSelect || novoCliente;
+
+  if (!cliente) {
+    alert("Informe o cliente");
+    return;
+  }
+  
 const telefone = document.getElementById("telefone").value;
 const endereco = document.getElementById("endereco").value;
 
@@ -155,13 +164,18 @@ const descricao = document.getElementById("descricao").value;
 const valor = Number(document.getElementById("valor").value) || 0;
 
 
-  if(novoCliente) {
-    const q = query(clientesRef, where("nome", "==", novoCliente));
-    const existe = await getDocs(q);
-    if(existe.empty) {
-      await addDoc(clientesRef, { nome: novoCliente, telefone, endereco });
-    }
+  if (novoCliente) {
+  const q = query(clientesRef, where("nome", "==", novoCliente));
+  const existe = await getDocs(q);
+
+  if (existe.empty) {
+    await addDoc(clientesRef, {
+      nome: novoCliente,
+      telefone,
+      endereco
+    });
   }
+}
 
   const osnum = await gerarOS();
   const financeiroStatus = status === "Concluído" ? "recebido" : "pendente";
