@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sistema OS - Entrada</title>
+<style>
+/* RESET E PADRÕES */
+body, html { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #f1f5f9; }
+a { text-decoration: none; color: inherit; }
+
+/* SIDEBAR / MENU */
+.sidebar {
+  width: 240px; background: #0f172a; color: #fff;
+  padding: 20px; height: 100vh; position: fixed; transition: transform 0.3s ease;
+}
+.sidebar h3 { margin-top: 0; font-size: 1.3em; }
+.sidebar a {
+  display: block; padding: 12px 10px; border-radius: 6px; margin-bottom: 5px; 
+  color: #fff; font-weight: 500;
+}
+.sidebar a:hover { background: #334155; }
+
+/* BOTÃO PARA MOBILE */
+.menu-toggle {
+  display: none; position: fixed; top: 15px; left: 15px;
+  background: #2563eb; border: none; padding: 10px 15px;
+  color: #fff; border-radius: 6px; font-size: 16px; cursor: pointer;
+  z-index: 1001;
+}
+
+/* CONTEÚDO PRINCIPAL */
+.main {
+  margin-left: 240px; padding: 30px; transition: margin-left 0.3s ease;
+}
+.card {
+  background: #fff; padding: 25px; border-radius: 14px; max-width: 700px; margin: auto;
+}
+input, select, textarea {
+  width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #cbd5e1;
+}
+button {
+  margin-top: 15px; padding: 12px; border: none; border-radius: 8px;
+  background: #2563eb; color: #fff; font-weight: bold; cursor: pointer;
+}
+button:hover { background: #1e40af; }
+
+/* RESPONSIVO */
+@media(max-width: 768px) {
+  .sidebar { transform: translateX(-260px); height: 100%; position: fixed; z-index: 1000; }
+  .sidebar.show { transform: translateX(0); }
+  .main { margin-left: 0; padding: 20px; }
+  .menu-toggle { display: block; }
+}
+</style>
+</head>
+<body>
+
+<!-- BOTÃO MENU MOBILE -->
+<button class="menu-toggle" onclick="toggleMenu()">☰ Menu</button>
+
+<div class="sidebar" id="sidebar">
+  <h3>🛠 Sistema OS</h3>
+  <a href="index.html">Entrada de Equipamento</a>
+  <a href="clientes.html">Cadastro de Clientes</a>
+  <a href="visualizar-os.html">Visualizar OS</a>
+  <a href="financeiro.html">Financeiro</a>
+  <a href="produtos.html">Produtos</a>
+  <a href="visitas.html">Visitas Técnicas</a>
+  <a href="backup.html">Backup / Restaurar</a>
+</div>
+
+<div class="main">
+  <div class="card">
+    <h2>Cadastro de Ordem de Serviço</h2>
+
+    <label>Cliente existente</label>
+    <select id="clienteSelect">
+      <option value="">-- Selecionar --</option>
+    </select>
+
+    <label>Ou novo cliente</label>
+    <input id="novoCliente" placeholder="Nome do cliente">
+    <input id="telefone" placeholder="Telefone">
+    <input id="endereco" placeholder="Endereço">
+
+    <input id="equipamento" placeholder="Nome do equipamento">
+    <input id="marca" placeholder="Marca">
+    <input id="serie" placeholder="Número de série">
+
+    <label>Status</label>
+    <select id="status">
+      <option>Pendente</option>
+      <option>Em bancada</option>
+      <option>Orçamento pronto</option>
+      <option>Concluído</option>
+    </select>
+
+    <textarea id="descricao" placeholder="Descrição do serviço"></textarea>
+    <input id="valor" type="number" value="0">
+
+    <button onclick="salvarOS()">Salvar Ordem de Serviço</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+  authDomain: "sistema-os-1284b.firebaseapp.com",
+  projectId: "sistema-os-1284b",
+  storageBucket: "sistema-os-1284b.appspot.com",
+  messagingSenderId: "1032102605721",
+  appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const clientesRef = collection(db, "clientes");
+const osRef = collection(db, "os");
+
+async function carregarClientes() {
+  const snap = await getDocs(clientesRef);
+  const select = document.getElementById("clienteSelect");
+  select.innerHTML = `<option value="">-- Selecionar --</option>`;
+  snap.forEach(d => {
+    const c = d.data();
+    const opt = document.createElement("option");
+    opt.value = c.nome;
+    opt.textContent = c.nome;
+    select.appendChild(opt);
+  });
+}
+
+async function gerarOS() {
+  const snap = await getDocs(osRef);
+  if(snap.empty) return 1000;
+  const nums = snap.docs.map(d => Number(d.data().osnum || 0));
+  return Math.max(...nums) + 1;
+}
+
+async function salvarOS() {
+
+const equipamento = document.getElementById("equipamento").value;
+const marca = document.getElementById("marca").value;
+const serie = document.getElementById("serie").value;
+
+
+
+const telefone = document.getElementById("telefone").value;
+const endereco = document.getElementById("endereco").value;
+
+const equipamento = document.getElementById("equipamento").value;
+const marca = document.getElementById("marca").value;
+const serie = document.getElementById("serie").value;
+
+const status = document.getElementById("status").value;
+const descricao = document.getElementById("descricao").value;
+const valor = Number(document.getElementById("valor").value) || 0;
+
+
+  if(novoCliente) {
+    const q = query(clientesRef, where("nome", "==", novoCliente));
+    const existe = await getDocs(q);
+    if(existe.empty) {
+      await addDoc(clientesRef, { nome: novoCliente, telefone, endereco });
+    }
+  }
+
+  const osnum = await gerarOS();
+  const financeiroStatus = status === "Concluído" ? "recebido" : "pendente";
+
+  await addDoc(osRef, {
+  await addDoc(osRef, {
+  osnum,
+  cliente,
+  telefone,
+  endereco,
+  equipamento,
+  marca,
+  serie,
+  status,
+  descricao,
+  valor,
+  financeiroStatus,
+  data: new Date()
+});
+
+  alert("Ordem de Serviço salva com sucesso!");
+
+  document.querySelectorAll("input, textarea").forEach(el => el.value = "");
+  document.getElementById("valor").value = 0;
+  document.getElementById("status").value = "Pendente";
+  document.getElementById("clienteSelect").value = "";
+
+document.getElementById("equipamento").value = "";
+document.getElementById("marca").value = "";
+document.getElementById("serie").value = "";
+
+  carregarClientes();
+}
+
+window.salvarOS = salvarOS;
+carregarClientes();
+
+// Função menu mobile
+function toggleMenu() {
+  document.getElementById('sidebar').classList.toggle('show');
+}
+</script>
+</body>
+</html>
