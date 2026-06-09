@@ -283,6 +283,11 @@ function recibo(os){
   pdf.save(`Recibo-OS-${os.osnum}.pdf`);
 }
 
+window.salvar=salvar;
+window.pdfOS=pdfOS;
+window.recibo=recibo;
+carregar();
+  
 // MENU MOBILE
 function toggleMenu(){ document.getElementById('sidebar').classList.toggle('show'); }
 
