@@ -46,7 +46,11 @@ button{background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointe
 <table>
 <thead>
 <tr>
-<th>Cliente</th><th>Solicitante</th><th>Descrição</th><th>Valor</th><th>Status</th>
+  <th>Cliente</th>
+  <th>Solicitante</th>
+  <th>Descrição</th>
+  <th>Valor</th>
+  <th>Ações</th>
 </tr>
 </thead>
 <tbody id="lista"></tbody>
@@ -56,10 +60,20 @@ button{background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointe
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBSQrG5bdCGC_6kUQxccgJxz2gtLiB2Kb4",
+  apiKey: "SUA_API_KEY",
   authDomain: "sistema-os-1284b.firebaseapp.com",
   projectId: "sistema-os-1284b",
   storageBucket: "sistema-os-1284b.appspot.com",
@@ -67,88 +81,256 @@ const firebaseConfig = {
   appId: "1:1032102605721:web:7eba5fc6e4eb9fc17ad908"
 };
 
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const clientesRef = collection(db, "clientes");
-
-async function salvarServico(){
- const cliente = document.getElementById('clienteSelect').value;
- const solicitante=document.getElementById('solicitante').value;
- const descricao=document.getElementById('descricao').value;
- const valor=Number(document.getElementById('valor').value);
-
-
+const servicosRef = collection(db, "servicosRapidos");
 
 async function carregarClientes() {
+  const snap = await getDocs(clientesRef);
 
-    const snap = await getDocs(clientesRef);
+  const select =
+    document.getElementById("clienteSelect");
 
-    const select =
-        document.getElementById("clienteSelect");
+  select.innerHTML =
+    `<option value="">-- Selecionar Cliente --</option>`;
 
-    select.innerHTML =
-        `<option value="">-- Selecionar Cliente --</option>`;
+  snap.forEach(docSnap => {
 
-    snap.forEach(doc => {
+    const cliente = docSnap.data();
 
-        const cliente = doc.data();
+    const option =
+      document.createElement("option");
 
-        const option =
-            document.createElement("option");
+    option.value = cliente.nome;
+    option.textContent = cliente.nome;
 
-        option.value = cliente.nome;
-        option.textContent = cliente.nome;
+    select.appendChild(option);
 
-        select.appendChild(option);
-
-    });
-
+  });
 }
 
-    await addDoc(collection(db,"servicosRapidos"),{
+async function salvarServico() {
+
+  const cliente =
+    document.getElementById("clienteSelect").value;
+
+  const solicitante =
+    document.getElementById("solicitante").value;
+
+  const descricao =
+    document.getElementById("descricao").value;
+
+  const valor =
+    Number(document.getElementById("valor").value);
+
+  if (!cliente) {
+    alert("Selecione um cliente");
+    return;
+  }
+
+  await addDoc(servicosRef, {
     cliente,
     solicitante,
     descricao,
     valor,
-    status:"Pendente",
-    data:new Date()
-});
-    
-async function salvarServico(){
+    status: "Pendente",
+    enviadoFinanceiro: false,
+    data: serverTimestamp()
+  });
 
- const cliente =
- document.getElementById('clienteSelect').value;
+  document.getElementById("solicitante").value = "";
+  document.getElementById("descricao").value = "";
+  document.getElementById("valor").value = "";
 
- const solicitante =
- document.getElementById('solicitante').value;
+  carregar();
+}
 
- const descricao =
- document.getElementById('descricao').value;
+async function carregar() {
 
- const valor =
- Number(document.getElementById('valor').value);
+  const tabela =
+    document.getElementById("lista");
 
- if(!cliente){
-    alert("Selecione um cliente");
-    return;
- }
+  tabela.innerHTML = "";
 
- await addDoc(collection(db,"servicosRapidos"),{
-   cliente,
-   solicitante,
-   descricao,
-   valor,
-   status:"Pendente",
-   data:serverTimestamp()
- });
+  const snap =
+    await getDocs(servicosRef);
 
- carregar();
+  const clientes = {};
+
+  snap.forEach(docSnap => {
+
+    const servico = docSnap.data();
+
+    if(servico.enviadoFinanceiro)
+      return;
+
+    if(!clientes[servico.cliente]){
+
+      clientes[servico.cliente] = {
+        total:0,
+        servicos:[]
+      };
+
+    }
+
+    clientes[servico.cliente]
+      .total += Number(servico.valor || 0);
+
+    clientes[servico.cliente]
+      .servicos.push({
+        id: docSnap.id,
+        ...servico
+      });
+
+  });
+
+  Object.keys(clientes).forEach(cliente => {
+
+    const grupo = clientes[cliente];
+
+    tabela.innerHTML += `
+      <tr style="background:#dbeafe;font-weight:bold">
+        <td colspan="5">
+          ${cliente}
+          | Total: R$ ${grupo.total.toFixed(2)}
+          <br>
+          <button onclick="enviarFinanceiro('${cliente}')">
+            Finalizar Cliente
+          </button>
+        </td>
+      </tr>
+    `;
+
+    grupo.servicos.forEach(servico => {
+
+      tabela.innerHTML += `
+      <tr>
+        <td>${servico.cliente}</td>
+        <td>${servico.solicitante}</td>
+        <td>${servico.descricao}</td>
+        <td>R$ ${Number(servico.valor).toFixed(2)}</td>
+        <td>
+
+          <button onclick="editarServico('${servico.id}')">
+            Editar
+          </button>
+
+          <button onclick="excluirServico('${servico.id}')">
+            Excluir
+          </button>
+
+        </td>
+      </tr>
+      `;
+
+    });
+
+  });
 
 }
 
+async function editarServico(id){
+
+  const novoValor =
+    prompt("Novo valor:");
+
+  if(!novoValor)
+    return;
+
+  await updateDoc(
+    doc(db,"servicosRapidos",id),
+    {
+      valor:Number(novoValor)
+    }
+  );
+
+  carregar();
+}
+
+async function excluirServico(id){
+
+  if(!confirm("Excluir serviço?"))
+    return;
+
+  await deleteDoc(
+    doc(db,"servicosRapidos",id)
+  );
+
+  carregar();
+}
+
+async function enviarFinanceiro(cliente){
+
+  const snap =
+    await getDocs(servicosRef);
+
+  let total = 0;
+
+  let descricao = "";
+
+  const atualizar = [];
+
+  snap.forEach(docSnap => {
+
+    const servico = docSnap.data();
+
+    if(
+      servico.cliente === cliente &&
+      !servico.enviadoFinanceiro
+    ){
+
+      total +=
+        Number(servico.valor || 0);
+
+      descricao +=
+        `• ${servico.descricao}\n`;
+
+      atualizar.push(docSnap.id);
+
+    }
+
+  });
+
+  if(total === 0){
+    alert("Nenhum serviço pendente.");
+    return;
+  }
+
+  await addDoc(
+    collection(db,"financeiro"),
+    {
+      cliente,
+      descricao,
+      valor: total,
+      origem:"Serviços Rápidos",
+      status:"Receber",
+      data: serverTimestamp()
+    }
+  );
+
+  for(const id of atualizar){
+
+    await updateDoc(
+      doc(db,"servicosRapidos",id),
+      {
+        enviadoFinanceiro:true,
+        status:"Finalizado"
+      }
+    );
+
+  }
+
+  alert("Enviado ao financeiro!");
+
+  carregar();
+}
+
 window.salvarServico = salvarServico;
+window.editarServico = editarServico;
+window.excluirServico = excluirServico;
+window.enviarFinanceiro = enviarFinanceiro;
 
 carregarClientes();
 carregar();
